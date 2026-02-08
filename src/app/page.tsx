@@ -1,65 +1,161 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useApp } from "@/context/AppContext";
+import { useMemo } from "react";
+import { format, parseISO } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function DashboardPage() {
+  const { selectedDate, dailyReports } = useApp();
+
+  const rows = useMemo(
+    () => dailyReports.filter((r) => r.date === selectedDate),
+    [dailyReports, selectedDate]
+  );
+
+  const totals = useMemo(() => {
+    const t = {
+      membershipNew: 0,
+      membershipRenew: 0,
+      bank: 0,
+      fdNew: 0,
+      fdRenew: 0,
+      rdCountFresh: 0,
+      rdNew: 0,
+      rdRenew: 0,
+      loanRdWithMb: 0,
+      loanFdWithMb: 0,
+      loanLoan: 0,
+    };
+    for (const r of rows) {
+      t.membershipNew += r.membershipNew;
+      t.membershipRenew += r.membershipRenew;
+      t.bank += r.bank;
+      t.fdNew += r.fdNew;
+      t.fdRenew += r.fdRenew;
+      t.rdCountFresh += r.rdCountFresh;
+      t.rdNew += r.rdNew;
+      t.rdRenew += r.rdRenew;
+      t.loanRdWithMb += r.loanRdWithMb;
+      t.loanFdWithMb += r.loanFdWithMb;
+      t.loanLoan += r.loanLoan;
+    }
+    return t;
+  }, [rows]);
+
+  const displayDate = selectedDate
+    ? format(parseISO(selectedDate), "dd MMM yyyy")
+    : "";
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Daily Report</h2>
+          <p className="text-sm text-muted-foreground">{displayDate}</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Staff Performance Summary</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-primary/5">
+                  <TableHead rowSpan={2} className="border-r font-bold text-center align-bottom w-12">
+                    #
+                  </TableHead>
+                  <TableHead rowSpan={2} className="border-r font-bold align-bottom min-w-[120px]">
+                    Staff Name
+                  </TableHead>
+                  <TableHead colSpan={2} className="border-r text-center font-bold bg-blue-50">
+                    MEMBERSHIP
+                  </TableHead>
+                  <TableHead rowSpan={2} className="border-r text-center font-bold bg-green-50 align-bottom">
+                    BANK
+                  </TableHead>
+                  <TableHead colSpan={2} className="border-r text-center font-bold bg-amber-50">
+                    FIXED DEPOSIT
+                  </TableHead>
+                  <TableHead colSpan={3} className="border-r text-center font-bold bg-purple-50">
+                    RECURRING DEPOSIT
+                  </TableHead>
+                  <TableHead colSpan={3} className="text-center font-bold bg-rose-50">
+                    LOAN BOOKING
+                  </TableHead>
+                </TableRow>
+                <TableRow className="bg-primary/5">
+                  <TableHead className="border-r text-center text-xs bg-blue-50">New</TableHead>
+                  <TableHead className="border-r text-center text-xs bg-blue-50">Renew</TableHead>
+                  <TableHead className="border-r text-center text-xs bg-amber-50">New</TableHead>
+                  <TableHead className="border-r text-center text-xs bg-amber-50">Renew</TableHead>
+                  <TableHead className="border-r text-center text-xs bg-purple-50">Fresh</TableHead>
+                  <TableHead className="border-r text-center text-xs bg-purple-50">New</TableHead>
+                  <TableHead className="border-r text-center text-xs bg-purple-50">Renew</TableHead>
+                  <TableHead className="text-center text-xs bg-rose-50">RD+MB</TableHead>
+                  <TableHead className="text-center text-xs bg-rose-50">FD+MB</TableHead>
+                  <TableHead className="text-center text-xs bg-rose-50">Loan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
+                      No data available for {displayDate}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  <>
+                    {rows.map((r, idx) => (
+                      <TableRow key={r.staffId} className="hover:bg-muted/50">
+                        <TableCell className="border-r text-center text-muted-foreground">{idx + 1}</TableCell>
+                        <TableCell className="border-r font-medium">{r.staffName}</TableCell>
+                        <TableCell className="border-r text-center">{r.membershipNew || "-"}</TableCell>
+                        <TableCell className="border-r text-center">{r.membershipRenew || "-"}</TableCell>
+                        <TableCell className="border-r text-center">{r.bank || "-"}</TableCell>
+                        <TableCell className="border-r text-center">{r.fdNew || "-"}</TableCell>
+                        <TableCell className="border-r text-center">{r.fdRenew || "-"}</TableCell>
+                        <TableCell className="border-r text-center">{r.rdCountFresh || "-"}</TableCell>
+                        <TableCell className="border-r text-center">{r.rdNew || "-"}</TableCell>
+                        <TableCell className="border-r text-center">{r.rdRenew || "-"}</TableCell>
+                        <TableCell className="text-center">{r.loanRdWithMb || "-"}</TableCell>
+                        <TableCell className="text-center">{r.loanFdWithMb || "-"}</TableCell>
+                        <TableCell className="text-center">{r.loanLoan || "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-primary/10 font-bold border-t-2">
+                      <TableCell className="border-r text-center" />
+                      <TableCell className="border-r">TOTAL</TableCell>
+                      <TableCell className="border-r text-center">{totals.membershipNew}</TableCell>
+                      <TableCell className="border-r text-center">{totals.membershipRenew}</TableCell>
+                      <TableCell className="border-r text-center">{totals.bank}</TableCell>
+                      <TableCell className="border-r text-center">{totals.fdNew}</TableCell>
+                      <TableCell className="border-r text-center">{totals.fdRenew}</TableCell>
+                      <TableCell className="border-r text-center">{totals.rdCountFresh}</TableCell>
+                      <TableCell className="border-r text-center">{totals.rdNew}</TableCell>
+                      <TableCell className="border-r text-center">{totals.rdRenew}</TableCell>
+                      <TableCell className="text-center">{totals.loanRdWithMb}</TableCell>
+                      <TableCell className="text-center">{totals.loanFdWithMb}</TableCell>
+                      <TableCell className="text-center">{totals.loanLoan}</TableCell>
+                    </TableRow>
+                  </>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
