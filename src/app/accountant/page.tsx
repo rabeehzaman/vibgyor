@@ -39,7 +39,7 @@ const statusVariant: Record<TransferStatus, string> = {
 
 export default function AccountantPage() {
   const {
-    selectedDate, fundTransfers, addFundTransfer, updateTransferStatus,
+    selectedDate, selectedDateEnd, entryDate, fundTransfers, addFundTransfer, updateTransferStatus,
     beneficiaries, addBeneficiary,
   } = useApp();
 
@@ -64,8 +64,8 @@ export default function AccountantPage() {
   });
 
   const filtered = useMemo(
-    () => fundTransfers.filter((t) => t.date === selectedDate),
-    [fundTransfers, selectedDate]
+    () => fundTransfers.filter((t) => t.date >= selectedDate && t.date <= selectedDateEnd),
+    [fundTransfers, selectedDate, selectedDateEnd]
   );
 
   const totalOut = useMemo(
@@ -100,7 +100,7 @@ export default function AccountantPage() {
     const staff = STAFF_MEMBERS.find((s) => s.id === form.staffId);
     const transfer: FundTransfer = {
       id: `ft${Date.now()}`,
-      date: selectedDate,
+      date: entryDate,
       beneficiaryId: form.beneficiaryId,
       beneficiaryName: beneficiary?.name ?? "",
       amount: Number(form.amount),
@@ -145,7 +145,10 @@ export default function AccountantPage() {
         <div>
           <h2 className="text-2xl font-bold">Accountant</h2>
           <p className="text-sm text-muted-foreground">
-            Fund Transfers - {format(parseISO(selectedDate), "dd MMM yyyy")}
+            Fund Transfers -{" "}
+            {selectedDate === selectedDateEnd
+              ? format(parseISO(selectedDate), "dd MMM yyyy")
+              : `${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`}
           </p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setErrors({}); }}>

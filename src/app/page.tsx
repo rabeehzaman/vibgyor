@@ -14,11 +14,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
-  const { selectedDate, dailyReports } = useApp();
+  const { selectedDate, selectedDateEnd, dailyReports } = useApp();
 
   const rows = useMemo(
-    () => dailyReports.filter((r) => r.date === selectedDate),
-    [dailyReports, selectedDate]
+    () => dailyReports.filter((r) => r.date >= selectedDate && r.date <= selectedDateEnd),
+    [dailyReports, selectedDate, selectedDateEnd]
   );
 
   const totals = useMemo(() => {
@@ -51,9 +51,9 @@ export default function DashboardPage() {
     return t;
   }, [rows]);
 
-  const displayDate = selectedDate
+  const displayDate = selectedDate === selectedDateEnd
     ? format(parseISO(selectedDate), "dd MMM yyyy")
-    : "";
+    : `${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`;
 
   return (
     <div className="space-y-4">

@@ -15,13 +15,13 @@ import { Wallet, ArrowDownToLine, ArrowUpFromLine, Scale, Save } from "lucide-re
 import { ToastNotification, useToast } from "@/components/ui/toast-notification";
 
 export default function CashierPage() {
-  const { selectedDate, cashierRecords, updateCashierRecord } = useApp();
+  const { selectedDate, selectedDateEnd, entryDate, cashierRecords, updateCashierRecord } = useApp();
   const { toast, showToast, hideToast } = useToast();
 
-  const record = useMemo(
-    () => cashierRecords.find((r) => r.date === selectedDate),
-    [cashierRecords, selectedDate]
-  );
+  const record = useMemo(() => {
+    const inRange = cashierRecords.filter((r) => r.date >= selectedDate && r.date <= selectedDateEnd);
+    return inRange.sort((a, b) => b.date.localeCompare(a.date))[0];
+  }, [cashierRecords, selectedDate, selectedDateEnd]);
 
   const [openingBalance, setOpeningBalance] = useState(0);
   const [depositReceived, setDepositReceived] = useState(0);
@@ -52,7 +52,7 @@ export default function CashierPage() {
   const handleSave = () => {
     const updated: CashierRecord = {
       id: record?.id ?? `cr${Date.now()}`,
-      date: selectedDate,
+      date: entryDate,
       openingBalance,
       depositReceived,
       cashOut,
@@ -69,7 +69,10 @@ export default function CashierPage() {
         <div>
           <h2 className="text-2xl font-bold">Cashier</h2>
           <p className="text-sm text-muted-foreground">
-            Cash Management - {format(parseISO(selectedDate), "dd MMM yyyy")}
+            Cash Management -{" "}
+            {selectedDate === selectedDateEnd
+              ? format(parseISO(selectedDate), "dd MMM yyyy")
+              : `${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`}
           </p>
         </div>
         <Button onClick={handleSave}><Save className="mr-2 h-4 w-4" />Save</Button>

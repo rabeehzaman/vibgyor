@@ -29,6 +29,35 @@ export const LOAN_TYPES = ["Secured", "Business", "Property", "Personal", "Vehic
 export const LOAN_STATUSES = ["Under Process", "Passed", "Rejected"] as const;
 export const TRANSFER_STATUSES = ["Pending", "Processed", "Done"] as const;
 
+export const MEMBERSHIP_PLANS = ["600", "300"] as const;
+export const MEMBERSHIP_PRODUCTS = ["SD", "DD", "RD", "FD", "KUTTI NIDHI"] as const;
+export const DD_TYPES = ["Free DD", "DDL", "SDD"] as const;
+export const COLLECTION_AREAS = ["KOOTTILANGADI-M", "KONDOTTY", "WANDOOR", "MALAPPURAM"] as const;
+export const PROFIT_TYPES = ["Flat", "Diminishing"] as const;
+export const LOAN_SCHEMES_LIST = ["BSL", "EMI", "RSL", "PRL", "GOLD PRL"] as const;
+export const MIGRATION_TYPES = ["Migration", "KML", "NIDHI"] as const;
+export const FD_TYPES = ["FD", "BSFD"] as const;
+export const BANK_CASH = ["Bank", "Cash"] as const;
+export const TENURE_OPTIONS = ["6 months", "12 months", "24 months", "36 months", "60 months"] as const;
+export const RD_STATUS_LIST = ["Active", "Completed", "Closed"] as const;
+export const CRE_CATEGORIES = [
+  "NewMembership",
+  "NewDailyDeposit",
+  "NewRD",
+  "NewFD",
+  "LoanBooking",
+  "AMC",
+] as const;
+export const CUSTOMER_NEEDS = [
+  "RD Enquiry",
+  "FD Renewal",
+  "Loan Query",
+  "Account Opening",
+  "General Enquiry",
+  "Complaint",
+  "Other",
+] as const;
+
 export const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/cre", label: "CRE", icon: "Users" },

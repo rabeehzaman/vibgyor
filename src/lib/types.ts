@@ -96,3 +96,85 @@ export interface Campaign {
   target: number;
   achieved: number;
 }
+
+export interface CREDailyEntry {
+  id: string;
+  date: string;
+  category: "NewMembership" | "NewDailyDeposit" | "NewRD" | "NewFD" | "LoanBooking" | "AMC";
+  accountNumber: string;
+  referredBy: string;
+  // NewMembership
+  plan?: "600" | "300";
+  product?: "SD" | "DD" | "RD" | "FD" | "KUTTI NIDHI";
+  // NewDailyDeposit
+  ddType?: string;
+  collectionArea?: string;
+  // RD / FD / Loan shared
+  amount?: number;
+  tenure?: string;
+  freshRenewal?: "Fresh" | "Renewal";
+  scheme?: string;
+  // FD-specific
+  bankCash?: "Bank" | "Cash";
+  fdType?: "FD" | "BSFD";
+  // Loan-specific
+  profitType?: "Flat" | "Diminishing";
+  profitRate?: number;
+  loanScheme?: string;
+  migration?: string;
+}
+
+export interface CustomerMovement {
+  id: string;
+  date: string;
+  customerName: string;
+  mobileNumber: string;
+  need: string;
+  treatedBy: string;
+  remarks: string;
+  verifiedBy: string;
+}
+
+export interface RecurringDeposit {
+  id: string;
+  accountNumber: string;
+  customerName: string;
+  mobileNumber: string;
+  amount: number;
+  tenure: string;
+  freshRenewal: "Fresh" | "Renewal";
+  scheme: string;
+  startDate: string;
+  staffId: string;
+  staffName: string;
+  status: "Active" | "Completed" | "Closed";
+}
+
+export interface Scheme {
+  id: string;
+  name: string;
+  type: "RD" | "FD" | "Loan" | "Membership";
+}
+
+export interface CustomReferrer {
+  id: string;
+  name: string;
+}
+
+export interface CustomerAccount {
+  id: string;
+  accountNumber: string;
+  customerName: string;
+}
+
+export interface MasterLists {
+  membershipPlans: string[];
+  membershipProducts: string[];
+  ddTypes: string[];
+  collectionAreas: string[];
+  tenureOptions: string[];
+  migrationTypes: string[];
+  customerNeeds: string[];
+  fdTypes: string[];
+  loanSchemeCodes: string[];
+}

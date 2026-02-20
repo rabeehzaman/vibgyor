@@ -29,7 +29,7 @@ const statusColor: Record<LoanStatus, string> = {
 };
 
 export default function LPOPage() {
-  const { selectedDate, loanEnquiries, addLoanEnquiry, updateLoanStatus } = useApp();
+  const { selectedDate, selectedDateEnd, entryDate, loanEnquiries, addLoanEnquiry, updateLoanStatus } = useApp();
   const [open, setOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const { toast, showToast, hideToast } = useToast();
@@ -41,8 +41,8 @@ export default function LPOPage() {
   });
 
   const filtered = useMemo(
-    () => loanEnquiries.filter((l) => l.date === selectedDate),
-    [loanEnquiries, selectedDate]
+    () => loanEnquiries.filter((l) => l.date >= selectedDate && l.date <= selectedDateEnd),
+    [loanEnquiries, selectedDate, selectedDateEnd]
   );
 
   const stats = useMemo(() => {
@@ -67,7 +67,7 @@ export default function LPOPage() {
     const staff = STAFF_MEMBERS.find((s) => s.id === form.staffId);
     const enquiry: LoanEnquiry = {
       id: `le${Date.now()}`,
-      date: selectedDate,
+      date: entryDate,
       customerName: form.customerName,
       loanType: form.loanType as LoanType,
       amount: Number(form.amount),
@@ -93,7 +93,10 @@ export default function LPOPage() {
         <div>
           <h2 className="text-2xl font-bold">LPO - Loan Processing</h2>
           <p className="text-sm text-muted-foreground">
-            Loan Enquiries - {format(parseISO(selectedDate), "dd MMM yyyy")}
+            Loan Enquiries -{" "}
+            {selectedDate === selectedDateEnd
+              ? format(parseISO(selectedDate), "dd MMM yyyy")
+              : `${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`}
           </p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setErrors({}); }}>
