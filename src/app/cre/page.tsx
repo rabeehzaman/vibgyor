@@ -32,7 +32,7 @@ import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  Plus, Users, TrendingUp, Repeat, FileText, Search, Settings, Check, ChevronsUpDown,
+  Plus, Users, TrendingUp, Repeat, FileText, Search, Settings, Check, ChevronsUpDown, ChevronLeft,
 } from "lucide-react";
 import { ToastNotification, useToast } from "@/components/ui/toast-notification";
 
@@ -321,6 +321,320 @@ function ManageMasterDataDialog({
 
 // ─── Daily Report Tab ───────────────────────────────────────────────────────
 
+function EntryFormFields({
+  category,
+  schemes,
+  form,
+  errors,
+  set,
+  referrerOpen,
+  setReferrerOpen,
+}: {
+  category: CREDailyEntry["category"];
+  schemes: Scheme[];
+  form: Record<string, string>;
+  errors: Record<string, boolean>;
+  set: (k: string, v: string) => void;
+  referrerOpen: boolean;
+  setReferrerOpen: (v: boolean) => void;
+}) {
+  const { customReferrers, customerAccounts, masterLists } = useApp();
+  const rdSchemes = schemes.filter((s) => s.type === "RD").map((s) => s.name);
+  const fdSchemes = schemes.filter((s) => s.type === "FD").map((s) => s.name);
+  const loanSchemes = schemes.filter((s) => s.type === "Loan").map((s) => s.name);
+  const err = (k: string) => errors[k] ? "border-red-500" : "";
+
+  return (
+    <div className="grid gap-3 py-2">
+      {/* Account Number with datalist */}
+      <div className="grid gap-1">
+        <Label>Account Number</Label>
+        <Input
+          list="acct-list"
+          value={form.accountNumber ?? ""}
+          onChange={(e) => set("accountNumber", e.target.value)}
+          className={err("accountNumber")}
+          placeholder="e.g. RD-10050"
+        />
+        <datalist id="acct-list">
+          {customerAccounts.map((a) => (
+            <option key={a.id} value={a.accountNumber}>{a.customerName}</option>
+          ))}
+        </datalist>
+        {errors.accountNumber && <p className="text-xs text-red-500">Required</p>}
+      </div>
+
+      {/* Referred By — Combobox */}
+      <div className="grid gap-1">
+        <Label>Referred By</Label>
+        <Popover open={referrerOpen} onOpenChange={setReferrerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              className={cn("w-full justify-between font-normal", errors.referredBy && "border-red-500")}
+            >
+              {form.referredBy || "Select referrer..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0">
+            <Command>
+              <CommandInput placeholder="Search..." />
+              <CommandList>
+                <CommandEmpty>No match found.</CommandEmpty>
+                <CommandGroup heading="CRE Staff">
+                  {CRE_STAFF.map((s) => (
+                    <CommandItem
+                      key={s.id}
+                      value={s.name}
+                      onSelect={() => { set("referredBy", s.name); setReferrerOpen(false); }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", form.referredBy === s.name ? "opacity-100" : "opacity-0")} />
+                      {s.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                {customReferrers.length > 0 && (
+                  <CommandGroup heading="Custom">
+                    {customReferrers.map((r) => (
+                      <CommandItem
+                        key={r.id}
+                        value={r.name}
+                        onSelect={() => { set("referredBy", r.name); setReferrerOpen(false); }}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", form.referredBy === r.name ? "opacity-100" : "opacity-0")} />
+                        {r.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        {errors.referredBy && <p className="text-xs text-red-500">Required</p>}
+      </div>
+
+      {category === "NewMembership" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-1">
+            <Label>Plan</Label>
+            <Select value={form.plan ?? ""} onValueChange={(v) => set("plan", v)}>
+              <SelectTrigger className={err("plan")}><SelectValue placeholder="Select plan" /></SelectTrigger>
+              <SelectContent>{masterLists.membershipPlans.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+            </Select>
+            {errors.plan && <p className="text-xs text-red-500">Required</p>}
+          </div>
+          <div className="grid gap-1">
+            <Label>Product</Label>
+            <Select value={form.product ?? ""} onValueChange={(v) => set("product", v)}>
+              <SelectTrigger className={err("product")}><SelectValue placeholder="Select product" /></SelectTrigger>
+              <SelectContent>{masterLists.membershipProducts.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+            </Select>
+            {errors.product && <p className="text-xs text-red-500">Required</p>}
+          </div>
+        </div>
+      )}
+
+      {category === "NewDailyDeposit" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-1">
+            <Label>DD Type</Label>
+            <Select value={form.ddType ?? ""} onValueChange={(v) => set("ddType", v)}>
+              <SelectTrigger className={err("ddType")}><SelectValue placeholder="Type" /></SelectTrigger>
+              <SelectContent>{masterLists.ddTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+            {errors.ddType && <p className="text-xs text-red-500">Required</p>}
+          </div>
+          <div className="grid gap-1">
+            <Label>Collection Area</Label>
+            <Select value={form.collectionArea ?? ""} onValueChange={(v) => set("collectionArea", v)}>
+              <SelectTrigger className={err("collectionArea")}><SelectValue placeholder="Area" /></SelectTrigger>
+              <SelectContent>{masterLists.collectionAreas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+            </Select>
+            {errors.collectionArea && <p className="text-xs text-red-500">Required</p>}
+          </div>
+        </div>
+      )}
+
+      {(category === "NewRD" || category === "NewFD" || category === "LoanBooking") && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-1">
+            <Label>Amount (₹)</Label>
+            <Input type="number" value={form.amount ?? ""} onChange={(e) => set("amount", e.target.value)} className={err("amount")} placeholder="0" />
+            {errors.amount && <p className="text-xs text-red-500">Required</p>}
+          </div>
+          <div className="grid gap-1">
+            <Label>Tenure</Label>
+            <Select value={form.tenure ?? ""} onValueChange={(v) => set("tenure", v)}>
+              <SelectTrigger className={err("tenure")}><SelectValue placeholder="Tenure" /></SelectTrigger>
+              <SelectContent>{masterLists.tenureOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+            {errors.tenure && <p className="text-xs text-red-500">Required</p>}
+          </div>
+        </div>
+      )}
+
+      {(category === "NewRD" || category === "NewFD") && (
+        <div className="grid gap-1">
+          <Label>Fresh / Renewal</Label>
+          <Select value={form.freshRenewal ?? ""} onValueChange={(v) => set("freshRenewal", v)}>
+            <SelectTrigger className={err("freshRenewal")}><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Fresh">Fresh</SelectItem>
+              <SelectItem value="Renewal">Renewal</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.freshRenewal && <p className="text-xs text-red-500">Required</p>}
+        </div>
+      )}
+
+      {category === "NewRD" && (
+        <div className="grid gap-1">
+          <Label>Scheme</Label>
+          <Select value={form.scheme ?? ""} onValueChange={(v) => set("scheme", v)}>
+            <SelectTrigger className={err("scheme")}><SelectValue placeholder="Select scheme" /></SelectTrigger>
+            <SelectContent>{rdSchemes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+          </Select>
+          {errors.scheme && <p className="text-xs text-red-500">Required</p>}
+        </div>
+      )}
+
+      {category === "NewFD" && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1">
+              <Label>Bank / Cash</Label>
+              <Select value={form.bankCash ?? ""} onValueChange={(v) => set("bankCash", v)}>
+                <SelectTrigger className={err("bankCash")}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{BANK_CASH.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+              </Select>
+              {errors.bankCash && <p className="text-xs text-red-500">Required</p>}
+            </div>
+            <div className="grid gap-1">
+              <Label>FD Type</Label>
+              <Select value={form.fdType ?? ""} onValueChange={(v) => set("fdType", v)}>
+                <SelectTrigger className={err("fdType")}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{masterLists.fdTypes.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+              </Select>
+              {errors.fdType && <p className="text-xs text-red-500">Required</p>}
+            </div>
+          </div>
+          <div className="grid gap-1">
+            <Label>Scheme</Label>
+            <Select value={form.scheme ?? ""} onValueChange={(v) => set("scheme", v)}>
+              <SelectTrigger className={err("scheme")}><SelectValue placeholder="Select scheme" /></SelectTrigger>
+              <SelectContent>{fdSchemes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+            {errors.scheme && <p className="text-xs text-red-500">Required</p>}
+          </div>
+        </>
+      )}
+
+      {category === "LoanBooking" && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1">
+              <Label>Profit Type</Label>
+              <Select value={form.profitType ?? ""} onValueChange={(v) => set("profitType", v)}>
+                <SelectTrigger className={err("profitType")}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{PROFIT_TYPES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+              </Select>
+              {errors.profitType && <p className="text-xs text-red-500">Required</p>}
+            </div>
+            <div className="grid gap-1">
+              <Label>Profit Rate (%)</Label>
+              <Input type="number" step="0.1" value={form.profitRate ?? ""} onChange={(e) => set("profitRate", e.target.value)} className={err("profitRate")} placeholder="e.g. 12" />
+              {errors.profitRate && <p className="text-xs text-red-500">Required</p>}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1">
+              <Label>Loan Scheme</Label>
+              <Select value={form.loanScheme ?? ""} onValueChange={(v) => set("loanScheme", v)}>
+                <SelectTrigger className={err("loanScheme")}><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  {masterLists.loanSchemeCodes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {loanSchemes.map((s) => <SelectItem key={`loan-${s}`} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {errors.loanScheme && <p className="text-xs text-red-500">Required</p>}
+            </div>
+            <div className="grid gap-1">
+              <Label>Migration (optional)</Label>
+              <Select value={form.migration ?? ""} onValueChange={(v) => set("migration", v)}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{masterLists.migrationTypes.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function buildEntry(entryDate: string, category: CREDailyEntry["category"], form: Record<string, string>): CREDailyEntry {
+  return {
+    id: `cre${Date.now()}`,
+    date: entryDate,
+    category,
+    accountNumber: form.accountNumber,
+    referredBy: form.referredBy,
+    plan: form.plan as CREDailyEntry["plan"],
+    product: form.product as CREDailyEntry["product"],
+    ddType: form.ddType,
+    collectionArea: form.collectionArea,
+    amount: form.amount ? Number(form.amount) : undefined,
+    tenure: form.tenure,
+    freshRenewal: form.freshRenewal as CREDailyEntry["freshRenewal"],
+    scheme: form.scheme,
+    bankCash: form.bankCash as CREDailyEntry["bankCash"],
+    fdType: form.fdType as CREDailyEntry["fdType"],
+    profitType: form.profitType as CREDailyEntry["profitType"],
+    profitRate: form.profitRate ? Number(form.profitRate) : undefined,
+    loanScheme: form.loanScheme,
+    migration: form.migration,
+  };
+}
+
+function validateEntryForm(category: CREDailyEntry["category"], form: Record<string, string>): Record<string, boolean> {
+  const e: Record<string, boolean> = {};
+  if (!form.accountNumber) e.accountNumber = true;
+  if (!form.referredBy) e.referredBy = true;
+  if (category === "NewMembership") {
+    if (!form.plan) e.plan = true;
+    if (!form.product) e.product = true;
+  }
+  if (category === "NewDailyDeposit") {
+    if (!form.ddType) e.ddType = true;
+    if (!form.collectionArea) e.collectionArea = true;
+  }
+  if (category === "NewRD") {
+    if (!form.amount) e.amount = true;
+    if (!form.tenure) e.tenure = true;
+    if (!form.freshRenewal) e.freshRenewal = true;
+    if (!form.scheme) e.scheme = true;
+  }
+  if (category === "NewFD") {
+    if (!form.amount) e.amount = true;
+    if (!form.tenure) e.tenure = true;
+    if (!form.freshRenewal) e.freshRenewal = true;
+    if (!form.bankCash) e.bankCash = true;
+    if (!form.fdType) e.fdType = true;
+    if (!form.scheme) e.scheme = true;
+  }
+  if (category === "LoanBooking") {
+    if (!form.amount) e.amount = true;
+    if (!form.tenure) e.tenure = true;
+    if (!form.profitType) e.profitType = true;
+    if (!form.profitRate) e.profitRate = true;
+    if (!form.loanScheme) e.loanScheme = true;
+  }
+  return e;
+}
+
 function AddEntryDialog({
   category,
   schemes,
@@ -330,88 +644,25 @@ function AddEntryDialog({
   schemes: Scheme[];
   onAdd: (entry: CREDailyEntry) => void;
 }) {
-  const { entryDate, customReferrers, customerAccounts, masterLists } = useApp();
+  const { entryDate } = useApp();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [referrerOpen, setReferrerOpen] = useState(false);
-
-  const rdSchemes = schemes.filter((s) => s.type === "RD").map((s) => s.name);
-  const fdSchemes = schemes.filter((s) => s.type === "FD").map((s) => s.name);
-  const loanSchemes = schemes.filter((s) => s.type === "Loan").map((s) => s.name);
 
   const set = (k: string, v: string) => {
     setForm((p) => ({ ...p, [k]: v }));
     setErrors((p) => ({ ...p, [k]: false }));
   };
 
-  const validate = () => {
-    const e: Record<string, boolean> = {};
-    if (!form.accountNumber) e.accountNumber = true;
-    if (!form.referredBy) e.referredBy = true;
-    if (category === "NewMembership") {
-      if (!form.plan) e.plan = true;
-      if (!form.product) e.product = true;
-    }
-    if (category === "NewDailyDeposit") {
-      if (!form.ddType) e.ddType = true;
-      if (!form.collectionArea) e.collectionArea = true;
-    }
-    if (category === "NewRD") {
-      if (!form.amount) e.amount = true;
-      if (!form.tenure) e.tenure = true;
-      if (!form.freshRenewal) e.freshRenewal = true;
-      if (!form.scheme) e.scheme = true;
-    }
-    if (category === "NewFD") {
-      if (!form.amount) e.amount = true;
-      if (!form.tenure) e.tenure = true;
-      if (!form.freshRenewal) e.freshRenewal = true;
-      if (!form.bankCash) e.bankCash = true;
-      if (!form.fdType) e.fdType = true;
-      if (!form.scheme) e.scheme = true;
-    }
-    if (category === "LoanBooking") {
-      if (!form.amount) e.amount = true;
-      if (!form.tenure) e.tenure = true;
-      if (!form.profitType) e.profitType = true;
-      if (!form.profitRate) e.profitRate = true;
-      if (!form.loanScheme) e.loanScheme = true;
-    }
-    return e;
-  };
-
   const handleSubmit = () => {
-    const e = validate();
+    const e = validateEntryForm(category, form);
     if (Object.keys(e).length > 0) { setErrors(e); return; }
-    const entry: CREDailyEntry = {
-      id: `cre${Date.now()}`,
-      date: entryDate,
-      category,
-      accountNumber: form.accountNumber,
-      referredBy: form.referredBy,
-      plan: form.plan as CREDailyEntry["plan"],
-      product: form.product as CREDailyEntry["product"],
-      ddType: form.ddType,
-      collectionArea: form.collectionArea,
-      amount: form.amount ? Number(form.amount) : undefined,
-      tenure: form.tenure,
-      freshRenewal: form.freshRenewal as CREDailyEntry["freshRenewal"],
-      scheme: form.scheme,
-      bankCash: form.bankCash as CREDailyEntry["bankCash"],
-      fdType: form.fdType as CREDailyEntry["fdType"],
-      profitType: form.profitType as CREDailyEntry["profitType"],
-      profitRate: form.profitRate ? Number(form.profitRate) : undefined,
-      loanScheme: form.loanScheme,
-      migration: form.migration,
-    };
-    onAdd(entry);
+    onAdd(buildEntry(entryDate, category, form));
     setForm({});
     setErrors({});
     setOpen(false);
   };
-
-  const err = (k: string) => errors[k] ? "border-red-500" : "";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setForm({}); setErrors({}); setReferrerOpen(false); } }}>
@@ -424,235 +675,105 @@ function AddEntryDialog({
         <DialogHeader>
           <DialogTitle>Add {CATEGORY_LABELS[category]}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-3 py-2">
-          {/* Account Number with datalist */}
-          <div className="grid gap-1">
-            <Label>Account Number</Label>
-            <Input
-              list="acct-list"
-              value={form.accountNumber ?? ""}
-              onChange={(e) => set("accountNumber", e.target.value)}
-              className={err("accountNumber")}
-              placeholder="e.g. RD-10050"
+        <EntryFormFields
+          category={category}
+          schemes={schemes}
+          form={form}
+          errors={errors}
+          set={set}
+          referrerOpen={referrerOpen}
+          setReferrerOpen={setReferrerOpen}
+        />
+        <Button onClick={handleSubmit} className="mt-2">Add Entry</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function QuickAddEntryDialog({
+  schemes,
+  onAdd,
+}: {
+  schemes: Scheme[];
+  onAdd: (entry: CREDailyEntry) => void;
+}) {
+  const { entryDate } = useApp();
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"pick" | "form">("pick");
+  const [selectedCategory, setSelectedCategory] = useState<CREDailyEntry["category"] | null>(null);
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [referrerOpen, setReferrerOpen] = useState(false);
+
+  const set = (k: string, v: string) => {
+    setForm((p) => ({ ...p, [k]: v }));
+    setErrors((p) => ({ ...p, [k]: false }));
+  };
+
+  const reset = () => {
+    setStep("pick");
+    setSelectedCategory(null);
+    setForm({});
+    setErrors({});
+    setReferrerOpen(false);
+  };
+
+  const handleSubmit = () => {
+    const category = selectedCategory!;
+    const e = validateEntryForm(category, form);
+    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    onAdd(buildEntry(entryDate, category, form));
+    reset();
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" /> Add Entry
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {step === "pick" ? "Add Entry" : `Add ${CATEGORY_LABELS[selectedCategory!]}`}
+          </DialogTitle>
+        </DialogHeader>
+        {step === "pick" ? (
+          <div className="grid grid-cols-2 gap-3 py-4">
+            {CATEGORIES.map((cat) => (
+              <Button
+                key={cat}
+                variant="outline"
+                className={`h-16 text-sm font-semibold border ${CATEGORY_COLORS[cat]}`}
+                onClick={() => { setSelectedCategory(cat); setStep("form"); }}
+              >
+                {CATEGORY_LABELS[cat]}
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-1"
+              onClick={() => { setStep("pick"); setForm({}); setErrors({}); setReferrerOpen(false); }}
+            >
+              <ChevronLeft className="h-4 w-4" /> Back to categories
+            </button>
+            <EntryFormFields
+              category={selectedCategory!}
+              schemes={schemes}
+              form={form}
+              errors={errors}
+              set={set}
+              referrerOpen={referrerOpen}
+              setReferrerOpen={setReferrerOpen}
             />
-            <datalist id="acct-list">
-              {customerAccounts.map((a) => (
-                <option key={a.id} value={a.accountNumber}>{a.customerName}</option>
-              ))}
-            </datalist>
-            {errors.accountNumber && <p className="text-xs text-red-500">Required</p>}
-          </div>
-
-          {/* Referred By — Combobox */}
-          <div className="grid gap-1">
-            <Label>Referred By</Label>
-            <Popover open={referrerOpen} onOpenChange={setReferrerOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className={cn("w-full justify-between font-normal", errors.referredBy && "border-red-500")}
-                >
-                  {form.referredBy || "Select referrer..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[300px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search..." />
-                  <CommandList>
-                    <CommandEmpty>No match found.</CommandEmpty>
-                    <CommandGroup heading="CRE Staff">
-                      {CRE_STAFF.map((s) => (
-                        <CommandItem
-                          key={s.id}
-                          value={s.name}
-                          onSelect={() => { set("referredBy", s.name); setReferrerOpen(false); }}
-                        >
-                          <Check className={cn("mr-2 h-4 w-4", form.referredBy === s.name ? "opacity-100" : "opacity-0")} />
-                          {s.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                    {customReferrers.length > 0 && (
-                      <CommandGroup heading="Custom">
-                        {customReferrers.map((r) => (
-                          <CommandItem
-                            key={r.id}
-                            value={r.name}
-                            onSelect={() => { set("referredBy", r.name); setReferrerOpen(false); }}
-                          >
-                            <Check className={cn("mr-2 h-4 w-4", form.referredBy === r.name ? "opacity-100" : "opacity-0")} />
-                            {r.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            {errors.referredBy && <p className="text-xs text-red-500">Required</p>}
-          </div>
-
-          {category === "NewMembership" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1">
-                <Label>Plan</Label>
-                <Select value={form.plan ?? ""} onValueChange={(v) => set("plan", v)}>
-                  <SelectTrigger className={err("plan")}><SelectValue placeholder="Select plan" /></SelectTrigger>
-                  <SelectContent>{masterLists.membershipPlans.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                </Select>
-                {errors.plan && <p className="text-xs text-red-500">Required</p>}
-              </div>
-              <div className="grid gap-1">
-                <Label>Product</Label>
-                <Select value={form.product ?? ""} onValueChange={(v) => set("product", v)}>
-                  <SelectTrigger className={err("product")}><SelectValue placeholder="Select product" /></SelectTrigger>
-                  <SelectContent>{masterLists.membershipProducts.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                </Select>
-                {errors.product && <p className="text-xs text-red-500">Required</p>}
-              </div>
-            </div>
-          )}
-
-          {category === "NewDailyDeposit" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1">
-                <Label>DD Type</Label>
-                <Select value={form.ddType ?? ""} onValueChange={(v) => set("ddType", v)}>
-                  <SelectTrigger className={err("ddType")}><SelectValue placeholder="Type" /></SelectTrigger>
-                  <SelectContent>{masterLists.ddTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select>
-                {errors.ddType && <p className="text-xs text-red-500">Required</p>}
-              </div>
-              <div className="grid gap-1">
-                <Label>Collection Area</Label>
-                <Select value={form.collectionArea ?? ""} onValueChange={(v) => set("collectionArea", v)}>
-                  <SelectTrigger className={err("collectionArea")}><SelectValue placeholder="Area" /></SelectTrigger>
-                  <SelectContent>{masterLists.collectionAreas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
-                </Select>
-                {errors.collectionArea && <p className="text-xs text-red-500">Required</p>}
-              </div>
-            </div>
-          )}
-
-          {(category === "NewRD" || category === "NewFD" || category === "LoanBooking") && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1">
-                <Label>Amount (₹)</Label>
-                <Input type="number" value={form.amount ?? ""} onChange={(e) => set("amount", e.target.value)} className={err("amount")} placeholder="0" />
-                {errors.amount && <p className="text-xs text-red-500">Required</p>}
-              </div>
-              <div className="grid gap-1">
-                <Label>Tenure</Label>
-                <Select value={form.tenure ?? ""} onValueChange={(v) => set("tenure", v)}>
-                  <SelectTrigger className={err("tenure")}><SelectValue placeholder="Tenure" /></SelectTrigger>
-                  <SelectContent>{masterLists.tenureOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select>
-                {errors.tenure && <p className="text-xs text-red-500">Required</p>}
-              </div>
-            </div>
-          )}
-
-          {(category === "NewRD" || category === "NewFD") && (
-            <div className="grid gap-1">
-              <Label>Fresh / Renewal</Label>
-              <Select value={form.freshRenewal ?? ""} onValueChange={(v) => set("freshRenewal", v)}>
-                <SelectTrigger className={err("freshRenewal")}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Fresh">Fresh</SelectItem>
-                  <SelectItem value="Renewal">Renewal</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.freshRenewal && <p className="text-xs text-red-500">Required</p>}
-            </div>
-          )}
-
-          {category === "NewRD" && (
-            <div className="grid gap-1">
-              <Label>Scheme</Label>
-              <Select value={form.scheme ?? ""} onValueChange={(v) => set("scheme", v)}>
-                <SelectTrigger className={err("scheme")}><SelectValue placeholder="Select scheme" /></SelectTrigger>
-                <SelectContent>{rdSchemes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-              {errors.scheme && <p className="text-xs text-red-500">Required</p>}
-            </div>
-          )}
-
-          {category === "NewFD" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1">
-                  <Label>Bank / Cash</Label>
-                  <Select value={form.bankCash ?? ""} onValueChange={(v) => set("bankCash", v)}>
-                    <SelectTrigger className={err("bankCash")}><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{BANK_CASH.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
-                  </Select>
-                  {errors.bankCash && <p className="text-xs text-red-500">Required</p>}
-                </div>
-                <div className="grid gap-1">
-                  <Label>FD Type</Label>
-                  <Select value={form.fdType ?? ""} onValueChange={(v) => set("fdType", v)}>
-                    <SelectTrigger className={err("fdType")}><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{masterLists.fdTypes.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-                  </Select>
-                  {errors.fdType && <p className="text-xs text-red-500">Required</p>}
-                </div>
-              </div>
-              <div className="grid gap-1">
-                <Label>Scheme</Label>
-                <Select value={form.scheme ?? ""} onValueChange={(v) => set("scheme", v)}>
-                  <SelectTrigger className={err("scheme")}><SelectValue placeholder="Select scheme" /></SelectTrigger>
-                  <SelectContent>{fdSchemes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                </Select>
-                {errors.scheme && <p className="text-xs text-red-500">Required</p>}
-              </div>
-            </>
-          )}
-
-          {category === "LoanBooking" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1">
-                  <Label>Profit Type</Label>
-                  <Select value={form.profitType ?? ""} onValueChange={(v) => set("profitType", v)}>
-                    <SelectTrigger className={err("profitType")}><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{PROFIT_TYPES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                  </Select>
-                  {errors.profitType && <p className="text-xs text-red-500">Required</p>}
-                </div>
-                <div className="grid gap-1">
-                  <Label>Profit Rate (%)</Label>
-                  <Input type="number" step="0.1" value={form.profitRate ?? ""} onChange={(e) => set("profitRate", e.target.value)} className={err("profitRate")} placeholder="e.g. 12" />
-                  {errors.profitRate && <p className="text-xs text-red-500">Required</p>}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1">
-                  <Label>Loan Scheme</Label>
-                  <Select value={form.loanScheme ?? ""} onValueChange={(v) => set("loanScheme", v)}>
-                    <SelectTrigger className={err("loanScheme")}><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>
-                      {masterLists.loanSchemeCodes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      {loanSchemes.map((s) => <SelectItem key={`loan-${s}`} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {errors.loanScheme && <p className="text-xs text-red-500">Required</p>}
-                </div>
-                <div className="grid gap-1">
-                  <Label>Migration (optional)</Label>
-                  <Select value={form.migration ?? ""} onValueChange={(v) => set("migration", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{masterLists.migrationTypes.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </>
-          )}
-
-          <Button onClick={handleSubmit} className="mt-2">Add Entry</Button>
-        </div>
+            <Button onClick={handleSubmit} className="mt-2">Add Entry</Button>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -784,7 +905,10 @@ function DailyReportTab() {
             ? `Showing entries for ${format(parseISO(selectedDate), "dd MMM yyyy")}`
             : `Showing entries: ${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`}
         </p>
-        <ManageMasterDataDialog schemes={schemes} onAddScheme={addScheme} />
+        <div className="flex items-center gap-2">
+          <QuickAddEntryDialog schemes={schemes} onAdd={handleAdd} />
+          <ManageMasterDataDialog schemes={schemes} onAddScheme={addScheme} />
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
