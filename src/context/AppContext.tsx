@@ -110,11 +110,12 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 function todayStr() { return format(new Date(), "yyyy-MM-dd"); }
+function monthStartStr() { return format(startOfMonth(new Date()), "yyyy-MM-dd"); }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [selectedDate, setSelectedDate] = useState(monthStartStr);
   const [selectedDateEnd, setSelectedDateEnd] = useState(todayStr);
-  const [datePreset, setDatePresetState] = useState<DatePreset>("today");
+  const [datePreset, setDatePresetState] = useState<DatePreset>("this-month");
   const [entryDate, setEntryDate] = useState(todayStr);
   const [dailyReports] = useState<DailyReportRow[]>(() => loadFromStorage("vibgyor_reports", initialReports));
   const [customerVisits, setCustomerVisits] = useState<CustomerVisit[]>(() => loadFromStorage("vibgyor_visits", initialVisits));
