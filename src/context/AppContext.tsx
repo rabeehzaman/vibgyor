@@ -14,6 +14,7 @@ import {
   CREDailyEntry,
   CustomerMovement,
   RecurringDeposit,
+  RDPayment,
   Scheme,
   CustomReferrer,
   CustomerAccount,
@@ -67,6 +68,9 @@ interface AppState {
   addCustomerMovement: (m: CustomerMovement) => void;
   rdList: RecurringDeposit[];
   addRD: (rd: RecurringDeposit) => void;
+  updateRDStatus: (id: string, status: RecurringDeposit["status"]) => void;
+  rdPayments: RDPayment[];
+  addRDPayment: (payment: RDPayment) => void;
   schemes: Scheme[];
   addScheme: (scheme: Scheme) => void;
   customReferrers: CustomReferrer[];
@@ -79,7 +83,7 @@ interface AppState {
 
 const AppContext = createContext<AppState | null>(null);
 
-const DATA_VERSION = "v6"; // bump this to force refresh of mock data
+const DATA_VERSION = "v7"; // bump this to force refresh of mock data
 
 const DEFAULT_MASTER_LISTS: MasterLists = {
   membershipPlans: [...MEMBERSHIP_PLANS],
@@ -126,6 +130,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [creEntries, setCREEntries] = useState<CREDailyEntry[]>(() => loadFromStorage("vibgyor_cre_entries", initialCREEntries));
   const [customerMovements, setCustomerMovements] = useState<CustomerMovement[]>(() => loadFromStorage("vibgyor_movements", initialMovements));
   const [rdList, setRDList] = useState<RecurringDeposit[]>(() => loadFromStorage("vibgyor_rdlist", initialRDList));
+  const [rdPayments, setRDPayments] = useState<RDPayment[]>(() => loadFromStorage("vibgyor_rdpayments", []));
   const [schemes, setSchemes] = useState<Scheme[]>(() => loadFromStorage("vibgyor_schemes", initialSchemes));
   const [customReferrers, setCustomReferrers] = useState<CustomReferrer[]>(() => loadFromStorage("vibgyor_referrers", []));
   const [customerAccounts, setCustomerAccounts] = useState<CustomerAccount[]>(() => loadFromStorage("vibgyor_accounts", []));
@@ -140,6 +145,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { localStorage.setItem("vibgyor_cre_entries", JSON.stringify(creEntries)); }, [creEntries]);
   useEffect(() => { localStorage.setItem("vibgyor_movements", JSON.stringify(customerMovements)); }, [customerMovements]);
   useEffect(() => { localStorage.setItem("vibgyor_rdlist", JSON.stringify(rdList)); }, [rdList]);
+  useEffect(() => { localStorage.setItem("vibgyor_rdpayments", JSON.stringify(rdPayments)); }, [rdPayments]);
   useEffect(() => { localStorage.setItem("vibgyor_schemes", JSON.stringify(schemes)); }, [schemes]);
   useEffect(() => { localStorage.setItem("vibgyor_referrers", JSON.stringify(customReferrers)); }, [customReferrers]);
   useEffect(() => { localStorage.setItem("vibgyor_accounts", JSON.stringify(customerAccounts)); }, [customerAccounts]);
@@ -183,6 +189,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addCREEntry = useCallback((entry: CREDailyEntry) => {
     setCREEntries((prev) => [...prev, entry]);
+    if (entry.category === "NewRD" && entry.customerName) {
+      setRDList((prev) => [
+        ...prev,
+        {
+          id: `rd${Date.now()}`,
+          accountNumber: entry.accountNumber,
+          customerName: entry.customerName!,
+          mobileNumber: entry.mobileNumber ?? "",
+          amount: entry.amount ?? 0,
+          tenure: entry.tenure ?? "",
+          freshRenewal: entry.freshRenewal ?? "Fresh",
+          scheme: entry.scheme ?? "",
+          startDate: entry.date,
+          staffId: entry.staffId ?? "",
+          staffName: entry.staffName ?? "",
+          status: "Active",
+        },
+      ]);
+    }
   }, []);
 
   const addCustomerMovement = useCallback((m: CustomerMovement) => {
@@ -191,6 +216,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addRD = useCallback((rd: RecurringDeposit) => {
     setRDList((prev) => [...prev, rd]);
+  }, []);
+
+  const updateRDStatus = useCallback((id: string, status: RecurringDeposit["status"]) => {
+    setRDList((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+  }, []);
+
+  const addRDPayment = useCallback((payment: RDPayment) => {
+    setRDPayments((prev) => {
+      const idx = prev.findIndex((p) => p.rdId === payment.rdId && p.period === payment.period);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = payment;
+        return next;
+      }
+      return [...prev, payment];
+    });
   }, []);
 
   const addScheme = useCallback((scheme: Scheme) => {
@@ -269,6 +310,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addCustomerMovement,
         rdList,
         addRD,
+        updateRDStatus,
+        rdPayments,
+        addRDPayment,
         schemes,
         addScheme,
         customReferrers,

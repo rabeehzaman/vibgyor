@@ -97,6 +97,17 @@ export interface Campaign {
   achieved: number;
 }
 
+export interface RDPayment {
+  id: string;
+  rdId: string;
+  period: string;           // "YYYY-MM" e.g. "2026-02"
+  amount: number;
+  paidDate: string;         // "YYYY-MM-DD"
+  collectedBy: string;      // staffId
+  collectedByName: string;
+  remarks?: string;
+}
+
 export interface CREDailyEntry {
   id: string;
   date: string;
@@ -122,6 +133,11 @@ export interface CREDailyEntry {
   profitRate?: number;
   loanScheme?: string;
   migration?: string;
+  // NewRD sync fields (used to auto-create a RecurringDeposit)
+  customerName?: string;
+  mobileNumber?: string;
+  staffId?: string;
+  staffName?: string;
 }
 
 export interface CustomerMovement {
