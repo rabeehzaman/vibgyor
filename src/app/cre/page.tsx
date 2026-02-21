@@ -153,6 +153,7 @@ function ManageMasterDataDialog({
   onAddScheme: (s: Scheme) => void;
 }) {
   const { customReferrers, addCustomReferrer, customerAccounts, addCustomerAccount, masterLists, addToMasterList } = useApp();
+  const { toast, showToast, hideToast } = useToast();
   const [open, setOpen] = useState(false);
 
   const [schemeName, setSchemeName] = useState("");
@@ -180,12 +181,14 @@ function ManageMasterDataDialog({
     onAddScheme({ id: `sch${Date.now()}`, name: schemeName.trim(), type: schemeType as Scheme["type"] });
     setSchemeName("");
     setSchemeType("");
+    showToast(`Scheme "${schemeName.trim()}" added`);
   };
 
   const handleAddReferrer = () => {
     if (!referrerName.trim()) { setReferrerNameErr(true); return; }
     addCustomReferrer({ id: `ref${Date.now()}`, name: referrerName.trim().toUpperCase() });
     setReferrerName("");
+    showToast(`Referrer "${referrerName.trim().toUpperCase()}" added`);
   };
 
   const handleAddAccount = () => {
@@ -196,12 +199,14 @@ function ManageMasterDataDialog({
     addCustomerAccount({ id: `acct${Date.now()}`, accountNumber: acctNumber.trim(), customerName: acctCustomer.trim() });
     setAcctNumber("");
     setAcctCustomer("");
+    showToast(`Account ${acctNumber.trim()} added`);
   };
 
   const handleAddToList = () => {
     if (!newListValue.trim()) { setNewListValueErr(true); return; }
     addToMasterList(selectedListKey as keyof typeof masterLists, newListValue.trim());
     setNewListValue("");
+    showToast(`"${newListValue.trim()}" added to list`);
   };
 
   const currentList = masterLists[selectedListKey as keyof typeof masterLists] as string[];
@@ -368,6 +373,7 @@ function ManageMasterDataDialog({
             </div>
           </TabsContent>
         </Tabs>
+        <ToastNotification message={toast.message} visible={toast.visible} onClose={hideToast} />
       </DialogContent>
     </Dialog>
   );
@@ -979,7 +985,7 @@ function CategorySection({
 
 function DailyReportTab() {
   const { selectedDate, selectedDateEnd, creEntries, addCREEntry, schemes, addScheme } = useApp();
-  const { showToast } = useToast();
+  const { toast, showToast, hideToast } = useToast();
 
   const filtered = useMemo(
     () => creEntries.filter((e) => e.date >= selectedDate && e.date <= selectedDateEnd),
@@ -1040,6 +1046,7 @@ function DailyReportTab() {
           onAdd={handleAdd}
         />
       ))}
+      <ToastNotification message={toast.message} visible={toast.visible} onClose={hideToast} />
     </div>
   );
 }
@@ -1140,7 +1147,7 @@ function AddMovementDialog({ onAdd }: { onAdd: (m: CustomerMovement) => void }) 
 
 function CustomerMovementTab() {
   const { selectedDate, selectedDateEnd, customerMovements, addCustomerMovement } = useApp();
-  const { showToast } = useToast();
+  const { toast, showToast, hideToast } = useToast();
 
   const filtered = useMemo(
     () => customerMovements.filter((m) => m.date >= selectedDate && m.date <= selectedDateEnd),
@@ -1204,6 +1211,7 @@ function CustomerMovementTab() {
           </div>
         </CardContent>
       </Card>
+      <ToastNotification message={toast.message} visible={toast.visible} onClose={hideToast} />
     </div>
   );
 }
@@ -2027,7 +2035,7 @@ const STATUS_BADGE: Record<RecurringDeposit["status"], string> = {
 
 function RDListTab() {
   const { rdList, addRD, schemes, rdPayments, addRDPayment } = useApp();
-  const { showToast } = useToast();
+  const { toast, showToast, hideToast } = useToast();
 
   const [search, setSearch] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState(() => format(new Date(), "yyyy-MM"));
@@ -2371,6 +2379,7 @@ function RDListTab() {
         rdPayments={rdPayments}
         onSave={handleSavePayment}
       />
+      <ToastNotification message={toast.message} visible={toast.visible} onClose={hideToast} />
     </div>
   );
 }
@@ -2379,7 +2388,6 @@ function RDListTab() {
 
 export default function CREPage() {
   const { selectedDate, selectedDateEnd } = useApp();
-  const { toast, showToast, hideToast } = useToast();
 
   const dateLabel = selectedDate === selectedDateEnd
     ? format(parseISO(selectedDate), "dd MMM yyyy")
@@ -2411,8 +2419,6 @@ export default function CREPage() {
           <RDListTab />
         </TabsContent>
       </Tabs>
-
-      <ToastNotification message={toast.message} visible={toast.visible} onClose={hideToast} />
     </div>
   );
 }

@@ -121,20 +121,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [selectedDateEnd, setSelectedDateEnd] = useState(todayStr);
   const [datePreset, setDatePresetState] = useState<DatePreset>("this-month");
   const [entryDate, setEntryDate] = useState(todayStr);
-  const [dailyReports] = useState<DailyReportRow[]>(() => loadFromStorage("vibgyor_reports", initialReports));
-  const [customerVisits, setCustomerVisits] = useState<CustomerVisit[]>(() => loadFromStorage("vibgyor_visits", initialVisits));
-  const [loanEnquiries, setLoanEnquiries] = useState<LoanEnquiry[]>(() => loadFromStorage("vibgyor_loans", initialLoans));
-  const [fundTransfers, setFundTransfers] = useState<FundTransfer[]>(() => loadFromStorage("vibgyor_transfers", initialTransfers));
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(() => loadFromStorage("vibgyor_beneficiaries", initialBeneficiaries));
-  const [cashierRecords, setCashierRecords] = useState<CashierRecord[]>(() => loadFromStorage("vibgyor_cashier", initialCashier));
-  const [creEntries, setCREEntries] = useState<CREDailyEntry[]>(() => loadFromStorage("vibgyor_cre_entries", initialCREEntries));
-  const [customerMovements, setCustomerMovements] = useState<CustomerMovement[]>(() => loadFromStorage("vibgyor_movements", initialMovements));
-  const [rdList, setRDList] = useState<RecurringDeposit[]>(() => loadFromStorage("vibgyor_rdlist", initialRDList));
-  const [rdPayments, setRDPayments] = useState<RDPayment[]>(() => loadFromStorage("vibgyor_rdpayments", []));
-  const [schemes, setSchemes] = useState<Scheme[]>(() => loadFromStorage("vibgyor_schemes", initialSchemes));
-  const [customReferrers, setCustomReferrers] = useState<CustomReferrer[]>(() => loadFromStorage("vibgyor_referrers", []));
-  const [customerAccounts, setCustomerAccounts] = useState<CustomerAccount[]>(() => loadFromStorage("vibgyor_accounts", []));
-  const [masterLists, setMasterLists] = useState<MasterLists>(() => loadFromStorage("vibgyor_master_lists", DEFAULT_MASTER_LISTS));
+  const [dailyReports] = useState<DailyReportRow[]>(initialReports);
+  const [customerVisits, setCustomerVisits] = useState<CustomerVisit[]>(initialVisits);
+  const [loanEnquiries, setLoanEnquiries] = useState<LoanEnquiry[]>(initialLoans);
+  const [fundTransfers, setFundTransfers] = useState<FundTransfer[]>(initialTransfers);
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(initialBeneficiaries);
+  const [cashierRecords, setCashierRecords] = useState<CashierRecord[]>(initialCashier);
+  const [creEntries, setCREEntries] = useState<CREDailyEntry[]>(initialCREEntries);
+  const [customerMovements, setCustomerMovements] = useState<CustomerMovement[]>(initialMovements);
+  const [rdList, setRDList] = useState<RecurringDeposit[]>(initialRDList);
+  const [rdPayments, setRDPayments] = useState<RDPayment[]>([]);
+  const [schemes, setSchemes] = useState<Scheme[]>(initialSchemes);
+  const [customReferrers, setCustomReferrers] = useState<CustomReferrer[]>([]);
+  const [customerAccounts, setCustomerAccounts] = useState<CustomerAccount[]>([]);
+  const [masterLists, setMasterLists] = useState<MasterLists>(DEFAULT_MASTER_LISTS);
+
+  // Load persisted data from localStorage after mount (avoids SSR/client hydration mismatch)
+  useEffect(() => {
+    setCustomerVisits(loadFromStorage("vibgyor_visits", initialVisits));
+    setLoanEnquiries(loadFromStorage("vibgyor_loans", initialLoans));
+    setFundTransfers(loadFromStorage("vibgyor_transfers", initialTransfers));
+    setBeneficiaries(loadFromStorage("vibgyor_beneficiaries", initialBeneficiaries));
+    setCashierRecords(loadFromStorage("vibgyor_cashier", initialCashier));
+    setCREEntries(loadFromStorage("vibgyor_cre_entries", initialCREEntries));
+    setCustomerMovements(loadFromStorage("vibgyor_movements", initialMovements));
+    setRDList(loadFromStorage("vibgyor_rdlist", initialRDList));
+    setRDPayments(loadFromStorage("vibgyor_rdpayments", []));
+    setSchemes(loadFromStorage("vibgyor_schemes", initialSchemes));
+    setCustomReferrers(loadFromStorage("vibgyor_referrers", []));
+    setCustomerAccounts(loadFromStorage("vibgyor_accounts", []));
+    setMasterLists(loadFromStorage("vibgyor_master_lists", DEFAULT_MASTER_LISTS));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => { localStorage.setItem("vibgyor_data_version", DATA_VERSION); }, []);
   useEffect(() => { localStorage.setItem("vibgyor_visits", JSON.stringify(customerVisits)); }, [customerVisits]);
