@@ -1069,7 +1069,7 @@ function AddMovementDialog({ onAdd }: { onAdd: (m: CustomerMovement) => void }) 
   const handleSubmit = () => {
     const e: Record<string, boolean> = {};
     if (!form.customerName) e.customerName = true;
-    if (!form.mobileNumber || form.mobileNumber.length !== 10) e.mobileNumber = true;
+    if (form.mobileNumber && form.mobileNumber.length !== 10) e.mobileNumber = true;
     if (!form.need) e.need = true;
     if (!form.treatedBy) e.treatedBy = true;
     if (!form.verifiedBy) e.verifiedBy = true;
@@ -1101,9 +1101,9 @@ function AddMovementDialog({ onAdd }: { onAdd: (m: CustomerMovement) => void }) 
               {errors.customerName && <p className="text-xs text-red-500">Required</p>}
             </div>
             <div className="grid gap-1">
-              <Label>Mobile Number</Label>
+              <Label>Mobile Number <span className="text-muted-foreground font-normal">(Optional)</span></Label>
               <Input value={form.mobileNumber} onChange={(e) => set("mobileNumber", e.target.value)} className={err("mobileNumber")} placeholder="10 digits" maxLength={10} />
-              {errors.mobileNumber && <p className="text-xs text-red-500">10-digit number required</p>}
+              {errors.mobileNumber && <p className="text-xs text-red-500">Must be 10 digits</p>}
             </div>
           </div>
           <div className="grid gap-1">
