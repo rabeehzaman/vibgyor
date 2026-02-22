@@ -2097,8 +2097,18 @@ function RDListTab() {
         .map((p) => p.rdId)
     );
     const defaulterCount = activeInPeriod.filter((r) => !fullyPaidRDIds.has(r.id)).length;
-    return { totalActive: activeRDs.length, expectedTotal, collectedTotal, defaulterCount };
+    const remaining = Math.max(0, expectedTotal - collectedTotal);
+    const collectionPct = expectedTotal > 0 ? Math.min(100, Math.round((collectedTotal / expectedTotal) * 100)) : 0;
+    const overCollected = collectedTotal > expectedTotal;
+    return { totalActive: activeRDs.length, expectedTotal, collectedTotal, defaulterCount, remaining, collectionPct, overCollected };
   }, [rdList, rdPayments, selectedPeriod, staffFilter]);
+
+  const getProgressColor = (pct: number, overCollected: boolean) => {
+    if (overCollected) return "bg-emerald-500";
+    if (pct >= 80) return "bg-green-500";
+    if (pct >= 50) return "bg-yellow-500";
+    return "bg-red-500";
+  };
 
   const staffInfo = useMemo(() => {
     if (staffFilter === "all") return null;
@@ -2204,20 +2214,37 @@ function RDListTab() {
       {/* Staff Summary Panel */}
       {staffInfo && (
         <Card className="border-blue-200 bg-blue-50/40">
-          <CardContent className="p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm">{staffInfo.name}</span>
-              <Badge variant="outline" className="text-xs">{staffInfo.department}</Badge>
+          <CardContent className="p-3 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm">{staffInfo.name}</span>
+                <Badge variant="outline" className="text-xs">{staffInfo.department}</Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-muted-foreground">{stats.totalActive} RDs</span>
+                <span className="text-blue-600">₹{stats.expectedTotal.toLocaleString("en-IN")}</span>
+                <span className="text-green-600 font-medium">₹{stats.collectedTotal.toLocaleString("en-IN")}</span>
+                <span className="text-orange-600 font-medium">₹{stats.remaining.toLocaleString("en-IN")} left</span>
+                {stats.defaulterCount > 0 && (
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-red-100 text-red-800">
+                    {stats.defaulterCount} defaulters
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span>{stats.totalActive} RDs</span>
-              <span className="text-green-600 font-medium">₹{stats.collectedTotal.toLocaleString("en-IN")} collected</span>
-              {stats.defaulterCount > 0 && (
-                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800">
-                  {stats.defaulterCount} defaulters
+            {stats.expectedTotal > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all", getProgressColor(stats.collectionPct, stats.overCollected))}
+                    style={{ width: `${stats.collectionPct}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium whitespace-nowrap">
+                  {stats.collectionPct}%{stats.overCollected && " (over-collected)"}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
