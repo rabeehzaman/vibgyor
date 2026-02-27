@@ -21,7 +21,21 @@ import {
   CustomReferrer,
   CustomerAccount,
   MasterLists,
+  DailyCashierState,
+  CashTransaction,
+  LockerRecord,
+  LooseRecord,
+  StaffShortage,
+  StaffAdvance,
 } from "@/lib/types";
+import {
+  createEmptyDailyCashierState,
+  recalcDayBook,
+  calcLockerBundleTotal,
+  calcLockerClosing,
+  calcNoteTotal,
+  calcCoinTotal,
+} from "@/lib/cashier-utils";
 import {
   MEMBERSHIP_PLANS,
   MEMBERSHIP_PRODUCTS,
@@ -68,6 +82,18 @@ interface AppState {
   addBeneficiary: (beneficiary: Beneficiary) => void;
   cashierRecords: CashierRecord[];
   updateCashierRecord: (record: CashierRecord) => void;
+  // Cashier V2
+  dailyCashierStates: DailyCashierState[];
+  saveDailyCashierState: (state: DailyCashierState) => void;
+  getDailyCashierState: (date: string) => DailyCashierState | undefined;
+  addCashTransaction: (date: string, txn: CashTransaction) => void;
+  removeCashTransaction: (date: string, txnId: string) => void;
+  updateLockerRecord: (date: string, locker: LockerRecord) => void;
+  updateLooseRecord: (date: string, loose: LooseRecord) => void;
+  addStaffShortage: (date: string, shortage: StaffShortage) => void;
+  removeStaffShortage: (date: string, shortageId: string) => void;
+  addStaffAdvance: (date: string, advance: StaffAdvance) => void;
+  removeStaffAdvance: (date: string, advanceId: string) => void;
   creEntries: CREDailyEntry[];
   addCREEntry: (entry: CREDailyEntry) => void;
   customerMovements: CustomerMovement[];
@@ -135,6 +161,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [fundTransfers, setFundTransfers] = useState<FundTransfer[]>(initialTransfers);
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(initialBeneficiaries);
   const [cashierRecords, setCashierRecords] = useState<CashierRecord[]>(initialCashier);
+  const [dailyCashierStates, setDailyCashierStates] = useState<DailyCashierState[]>([]);
   const [creEntries, setCREEntries] = useState<CREDailyEntry[]>(initialCREEntries);
   const [customerMovements, setCustomerMovements] = useState<CustomerMovement[]>(initialMovements);
   const [rdList, setRDList] = useState<RecurringDeposit[]>(initialRDList);
@@ -153,6 +180,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setFundTransfers(loadFromStorage("vibgyor_transfers", initialTransfers));
     setBeneficiaries(loadFromStorage("vibgyor_beneficiaries", initialBeneficiaries));
     setCashierRecords(loadFromStorage("vibgyor_cashier", initialCashier));
+    setDailyCashierStates(loadFromStorage("vibgyor_cashier_v2", []));
     setCREEntries(loadFromStorage("vibgyor_cre_entries", initialCREEntries));
     setCustomerMovements(loadFromStorage("vibgyor_movements", initialMovements));
     setRDList(loadFromStorage("vibgyor_rdlist", initialRDList));
@@ -172,6 +200,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { localStorage.setItem("vibgyor_transfers", JSON.stringify(fundTransfers)); }, [fundTransfers]);
   useEffect(() => { localStorage.setItem("vibgyor_beneficiaries", JSON.stringify(beneficiaries)); }, [beneficiaries]);
   useEffect(() => { localStorage.setItem("vibgyor_cashier", JSON.stringify(cashierRecords)); }, [cashierRecords]);
+  useEffect(() => { localStorage.setItem("vibgyor_cashier_v2", JSON.stringify(dailyCashierStates)); }, [dailyCashierStates]);
   useEffect(() => { localStorage.setItem("vibgyor_cre_entries", JSON.stringify(creEntries)); }, [creEntries]);
   useEffect(() => { localStorage.setItem("vibgyor_movements", JSON.stringify(customerMovements)); }, [customerMovements]);
   useEffect(() => { localStorage.setItem("vibgyor_rdlist", JSON.stringify(rdList)); }, [rdList]);
@@ -231,6 +260,92 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, record];
     });
+  }, []);
+
+  // ─── Cashier V2 Actions ─────────────────────
+  const saveDailyCashierState = useCallback((state: DailyCashierState) => {
+    setDailyCashierStates((prev) => {
+      const idx = prev.findIndex((s) => s.date === state.date);
+      if (idx >= 0) { const next = [...prev]; next[idx] = state; return next; }
+      return [...prev, state];
+    });
+  }, []);
+
+  const getDailyCashierState = useCallback((date: string): DailyCashierState | undefined => {
+    return dailyCashierStates.find((s) => s.date === date);
+  }, [dailyCashierStates]);
+
+  const addCashTransaction = useCallback((date: string, txn: CashTransaction) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      const updatedDayBook = recalcDayBook({ ...s.dayBook, transactions: [...s.dayBook.transactions, txn] });
+      return { ...s, dayBook: updatedDayBook };
+    }));
+  }, []);
+
+  const removeCashTransaction = useCallback((date: string, txnId: string) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      const updatedDayBook = recalcDayBook({ ...s.dayBook, transactions: s.dayBook.transactions.filter((t) => t.id !== txnId) });
+      return { ...s, dayBook: updatedDayBook };
+    }));
+  }, []);
+
+  const updateLockerRecord = useCallback((date: string, locker: LockerRecord) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      const closing = calcLockerClosing(locker.openingDenominations, locker.deposited, locker.withdrawn);
+      const updatedLocker: LockerRecord = {
+        ...locker,
+        closingDenominations: closing,
+        openingTotal: calcLockerBundleTotal(locker.openingDenominations),
+        depositedTotal: calcLockerBundleTotal(locker.deposited),
+        withdrawnTotal: calcLockerBundleTotal(locker.withdrawn),
+        closingTotal: calcLockerBundleTotal(closing),
+      };
+      return { ...s, locker: updatedLocker };
+    }));
+  }, []);
+
+  const updateLooseRecord = useCallback((date: string, loose: LooseRecord) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      const updatedLoose: LooseRecord = {
+        ...loose,
+        notesTotal: calcNoteTotal(loose.noteDenominations),
+        coinsTotal: calcCoinTotal(loose.coinDenominations),
+        grandTotal: calcNoteTotal(loose.noteDenominations) + calcCoinTotal(loose.coinDenominations),
+      };
+      return { ...s, loose: updatedLoose };
+    }));
+  }, []);
+
+  const addStaffShortage = useCallback((date: string, shortage: StaffShortage) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      return { ...s, reconciliation: { ...s.reconciliation, staffShortages: [...s.reconciliation.staffShortages, shortage] } };
+    }));
+  }, []);
+
+  const removeStaffShortage = useCallback((date: string, shortageId: string) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      return { ...s, reconciliation: { ...s.reconciliation, staffShortages: s.reconciliation.staffShortages.filter((sh) => sh.id !== shortageId) } };
+    }));
+  }, []);
+
+  const addStaffAdvance = useCallback((date: string, advance: StaffAdvance) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      return { ...s, staffAdvances: [...s.staffAdvances, advance] };
+    }));
+  }, []);
+
+  const removeStaffAdvance = useCallback((date: string, advanceId: string) => {
+    setDailyCashierStates((prev) => prev.map((s) => {
+      if (s.date !== date) return s;
+      return { ...s, staffAdvances: s.staffAdvances.filter((a) => a.id !== advanceId) };
+    }));
   }, []);
 
   const addCREEntry = useCallback((entry: CREDailyEntry) => {
@@ -354,6 +469,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addBeneficiary,
         cashierRecords,
         updateCashierRecord,
+        dailyCashierStates,
+        saveDailyCashierState,
+        getDailyCashierState,
+        addCashTransaction,
+        removeCashTransaction,
+        updateLockerRecord,
+        updateLooseRecord,
+        addStaffShortage,
+        removeStaffShortage,
+        addStaffAdvance,
+        removeStaffAdvance,
         creEntries,
         addCREEntry,
         customerMovements,

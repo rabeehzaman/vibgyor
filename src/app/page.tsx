@@ -118,7 +118,7 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     {rows.map((r, idx) => (
-                      <TableRow key={r.staffId} className="hover:bg-muted/50">
+                      <TableRow key={`${r.staffId}-${r.date}`} className="hover:bg-muted/50">
                         <TableCell className="border-r text-center text-muted-foreground">{idx + 1}</TableCell>
                         <TableCell className="border-r font-medium">{r.staffName}</TableCell>
                         <TableCell className="border-r text-center">{r.membershipNew || "-"}</TableCell>

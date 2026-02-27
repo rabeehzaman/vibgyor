@@ -86,6 +86,7 @@ export interface LoanRepayment {
   remarks?: string;
 }
 
+// ─── LEGACY (kept for backward compat) ─────
 export interface CashierRecord {
   id: string;
   date: string;
@@ -98,6 +99,103 @@ export interface CashierRecord {
 
 export interface DenominationBreakdown {
   [key: string]: number; // denomination -> count
+}
+
+// ─── CASHIER V2: FULL CASH MANAGEMENT ───────
+export type DenominationValue = 2000 | 500 | 200 | 100 | 50 | 20 | 10 | 5 | 2 | 1;
+
+export interface DenominationCount {
+  denomination: DenominationValue;
+  noteCount: number;
+  coinCount: number; // relevant for 10, 5, 2, 1
+}
+
+export interface CashTransaction {
+  id: string;
+  date: string;
+  type: "receipt" | "payment";
+  amount: number;
+  description?: string;
+  timestamp: string;
+}
+
+export interface DayBookRecord {
+  id: string;
+  date: string;
+  openingBalance: number;
+  transactions: CashTransaction[];
+  totalReceipts: number;
+  totalPayments: number;
+  closingBalance: number;
+  systemClosingBalance?: number;
+}
+
+export interface LockerRecord {
+  id: string;
+  date: string;
+  openingDenominations: DenominationCount[];
+  deposited: DenominationCount[];
+  withdrawn: DenominationCount[];
+  closingDenominations: DenominationCount[];
+  openingTotal: number;
+  depositedTotal: number;
+  withdrawnTotal: number;
+  closingTotal: number;
+}
+
+export interface LooseRecord {
+  id: string;
+  date: string;
+  noteDenominations: DenominationCount[];
+  coinDenominations: DenominationCount[];
+  notesTotal: number;
+  coinsTotal: number;
+  grandTotal: number;
+}
+
+export interface ReconciliationRecord {
+  id: string;
+  date: string;
+  dayBookClosing: number;
+  lockerTotal: number;
+  looseTotal: number;
+  physicalTotal: number;
+  systemClosing: number;
+  difference: number;
+  excessAmount: number;
+  shortAmount: number;
+  staffShortages: StaffShortage[];
+  isReconciled: boolean;
+}
+
+export interface StaffShortage {
+  id: string;
+  date: string;
+  staffId: string;
+  staffName: string;
+  amount: number;
+  reason?: string;
+}
+
+export interface StaffAdvance {
+  id: string;
+  date: string;
+  staffId: string;
+  staffName: string;
+  category: string;
+  amount: number;
+  remarks?: string;
+}
+
+export interface DailyCashierState {
+  id: string;
+  date: string;
+  dayBook: DayBookRecord;
+  locker: LockerRecord;
+  loose: LooseRecord;
+  reconciliation: ReconciliationRecord;
+  staffAdvances: StaffAdvance[];
+  status: "draft" | "reconciled" | "closed";
 }
 
 export type TransferStatus = "Pending" | "Processed" | "Done";

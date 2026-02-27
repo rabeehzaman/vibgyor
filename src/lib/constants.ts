@@ -21,7 +21,22 @@ export const STAFF_MEMBERS: StaffMember[] = [
   { id: "s18", name: "NAFEESA", department: "CRE" },
 ];
 
-export const DENOMINATIONS = [500, 200, 100, 50, 20, 10, 5, 2, 1] as const;
+export const DENOMINATIONS = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1] as const;
+
+// Cashier V2 constants
+export const ALL_DENOMINATIONS = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1] as const;
+export const NOTE_DENOMINATIONS = [2000, 500, 200, 100, 50, 20] as const;
+export const COIN_DENOMINATIONS = [10, 5, 2, 1] as const;
+export const BUNDLE_THRESHOLD = 100; // notes per bundle
+
+export const STAFF_ADVANCE_CATEGORIES = [
+  "TEA&SNACKS",
+  "PETTY CASH",
+  "CONVEYANCE",
+  "STATIONERY",
+  "SALARY ADVANCE",
+  "MISCELLANEOUS",
+] as const;
 
 export const DEPOSIT_TYPES = ["RD", "FD", "Daily", "Saving"] as const;
 export const DEPOSIT_ACTIONS = ["New", "Renew"] as const;
