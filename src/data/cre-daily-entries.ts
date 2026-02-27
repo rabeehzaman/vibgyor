@@ -45,19 +45,7 @@ export const creDailyEntries: CREDailyEntry[] = [
     fdType: "FD",
     scheme: "Regular FD",
   },
-  {
-    id: "cre005",
-    date: "2026-02-03",
-    category: "LoanBooking",
-    accountNumber: "LN-50601",
-    referredBy: "SABIRA",
-    amount: 200000,
-    tenure: "36 months",
-    profitType: "Flat",
-    profitRate: 12,
-    loanScheme: "EMI",
-    migration: "NIDHI",
-  },
+
   {
     id: "cre006",
     date: "2026-02-03",
@@ -109,19 +97,7 @@ export const creDailyEntries: CREDailyEntry[] = [
     ddType: "DDL",
     collectionArea: "WANDOOR",
   },
-  {
-    id: "cre011",
-    date: "2026-02-05",
-    category: "LoanBooking",
-    accountNumber: "LN-50602",
-    referredBy: "SHAMEELA",
-    amount: 500000,
-    tenure: "60 months",
-    profitType: "Diminishing",
-    profitRate: 14,
-    loanScheme: "BSL",
-    migration: "KML",
-  },
+
   {
     id: "cre012",
     date: "2026-02-05",
