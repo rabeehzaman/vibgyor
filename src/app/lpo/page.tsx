@@ -220,7 +220,7 @@ export default function LPOPage() {
     const newErrors: Record<string, boolean> = {};
     if (!bookingForm.customerName) newErrors.customerName = true;
     if (!bookingForm.startDate) newErrors.startDate = true;
-    if (!bookingForm.endDate) newErrors.endDate = true;
+
     if (!bookingForm.fullLoanAmount) newErrors.fullLoanAmount = true;
     if (!bookingForm.emiAmount) newErrors.emiAmount = true;
     if (!bookingForm.tenure) newErrors.tenure = true;
@@ -569,20 +569,30 @@ export default function LPOPage() {
                       <Input
                         type="date"
                         value={bookingForm.startDate}
-                        onChange={(e) => { setBookingForm({ ...bookingForm, startDate: e.target.value }); setBookingErrors({ ...bookingErrors, startDate: false }); }}
+                        onChange={(e) => {
+                          const newStart = e.target.value;
+                          const updated: typeof bookingForm = { ...bookingForm, startDate: newStart };
+                          if (newStart && bookingForm.tenure) {
+                            updated.endDate = format(addMonths(parseISO(newStart), Number(bookingForm.tenure)), "yyyy-MM-dd");
+                          }
+                          setBookingForm(updated);
+                          setBookingErrors({ ...bookingErrors, startDate: false });
+                        }}
                         className={bookingErrors.startDate ? "border-red-500" : ""}
                       />
                       {bookingErrors.startDate && <p className="text-xs text-red-500">Required</p>}
                     </div>
                     <div className="grid gap-2">
-                      <Label>End Date</Label>
+                      <Label>End Date <span className="text-xs text-muted-foreground font-normal">(auto-calculated)</span></Label>
                       <Input
                         type="date"
                         value={bookingForm.endDate}
-                        onChange={(e) => { setBookingForm({ ...bookingForm, endDate: e.target.value }); setBookingErrors({ ...bookingErrors, endDate: false }); }}
-                        className={bookingErrors.endDate ? "border-red-500" : ""}
+                        readOnly
+                        className="bg-muted cursor-not-allowed"
                       />
-                      {bookingErrors.endDate && <p className="text-xs text-red-500">Required</p>}
+                      {bookingForm.startDate && bookingForm.tenure && (
+                        <p className="text-xs text-muted-foreground">Start + {bookingForm.tenure} months</p>
+                      )}
                     </div>
                   </div>
 
@@ -603,7 +613,17 @@ export default function LPOPage() {
                       <Input
                         type="number"
                         value={bookingForm.tenure}
-                        onChange={(e) => { setBookingForm({ ...bookingForm, tenure: e.target.value }); setBookingErrors({ ...bookingErrors, tenure: false }); }}
+                        onChange={(e) => {
+                          const newTenure = e.target.value;
+                          const updated: typeof bookingForm = { ...bookingForm, tenure: newTenure };
+                          if (bookingForm.startDate && newTenure) {
+                            updated.endDate = format(addMonths(parseISO(bookingForm.startDate), Number(newTenure)), "yyyy-MM-dd");
+                          } else {
+                            updated.endDate = "";
+                          }
+                          setBookingForm(updated);
+                          setBookingErrors({ ...bookingErrors, tenure: false });
+                        }}
                         placeholder="e.g. 24"
                         className={bookingErrors.tenure ? "border-red-500" : ""}
                       />

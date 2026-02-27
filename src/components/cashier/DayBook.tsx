@@ -26,6 +26,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
     const [txnType, setTxnType] = useState<"receipt" | "payment">("receipt");
     const [txnAmount, setTxnAmount] = useState("");
     const [txnDesc, setTxnDesc] = useState("");
+    const [filter, setFilter] = useState<"all" | "receipts" | "payments">("all");
 
     const dayBook = state.dayBook;
 
@@ -36,6 +37,21 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
     const payments = useMemo(
         () => dayBook.transactions.filter((t) => t.type === "payment"),
         [dayBook.transactions]
+    );
+
+    const filteredTransactions = useMemo(() => {
+        if (filter === "receipts") return receipts;
+        if (filter === "payments") return payments;
+        return dayBook.transactions;
+    }, [dayBook.transactions, receipts, payments, filter]);
+
+    const filteredReceipts = useMemo(
+        () => filteredTransactions.filter((t) => t.type === "receipt").reduce((s, t) => s + t.amount, 0),
+        [filteredTransactions]
+    );
+    const filteredPayments = useMemo(
+        () => filteredTransactions.filter((t) => t.type === "payment").reduce((s, t) => s + t.amount, 0),
+        [filteredTransactions]
     );
 
     const handleOpeningChange = (val: number) => {
@@ -151,8 +167,8 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                         <div className="flex rounded-lg overflow-hidden border">
                             <button
                                 className={`px-3 py-1.5 text-xs font-semibold transition-colors ${txnType === "receipt"
-                                        ? "bg-green-600 text-white"
-                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                    ? "bg-green-600 text-white"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
                                     }`}
                                 onClick={() => setTxnType("receipt")}
                             >
@@ -161,8 +177,8 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                             </button>
                             <button
                                 className={`px-3 py-1.5 text-xs font-semibold transition-colors ${txnType === "payment"
-                                        ? "bg-red-600 text-white"
-                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                    ? "bg-red-600 text-white"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
                                     }`}
                                 onClick={() => setTxnType("payment")}
                             >
@@ -199,15 +215,35 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                 </CardContent>
             </Card>
 
-            {/* Transaction Ledger */}
+            {/* Transaction Ledger — Traditional Daybook Format */}
             <Card>
                 <CardHeader className="pb-2 pt-3 px-4">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                        <Receipt className="h-4 w-4" /> Transaction Ledger
-                        <span className="text-xs font-normal text-muted-foreground ml-auto">
-                            {dayBook.transactions.length} transactions
-                        </span>
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                            <Receipt className="h-4 w-4" /> Day Book Ledger
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                            <div className="flex rounded-lg overflow-hidden border text-xs">
+                                {(["all", "receipts", "payments"] as const).map((mode) => (
+                                    <button
+                                        key={mode}
+                                        onClick={() => setFilter(mode)}
+                                        className={`px-2.5 py-1 font-medium capitalize transition-colors ${filter === mode
+                                            ? mode === "receipts" ? "bg-green-600 text-white"
+                                                : mode === "payments" ? "bg-red-600 text-white"
+                                                    : "bg-primary text-primary-foreground"
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                            }`}
+                                    >
+                                        {mode === "all" ? "All" : mode === "receipts" ? "Receipts" : "Payments"}
+                                    </button>
+                                ))}
+                            </div>
+                            <span className="text-xs font-normal text-muted-foreground">
+                                {filteredTransactions.length} of {dayBook.transactions.length}
+                            </span>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
@@ -215,46 +251,56 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-10 text-center">#</TableHead>
-                                    <TableHead className="w-20">Type</TableHead>
-                                    <TableHead className="text-right w-28">Amount</TableHead>
                                     <TableHead>Description</TableHead>
-                                    <TableHead className="w-20">Time</TableHead>
+                                    <TableHead className="text-right w-28 text-green-700">Receipt</TableHead>
+                                    <TableHead className="text-right w-28 text-red-700">Payment</TableHead>
+                                    <TableHead className="w-20 text-center">Time</TableHead>
                                     <TableHead className="w-10"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {dayBook.transactions.length === 0 ? (
+                                {filteredTransactions.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                            No transactions yet. Add receipts and payments above.
+                                            {dayBook.transactions.length === 0
+                                                ? "No transactions yet. Add receipts and payments above."
+                                                : `No ${filter} found.`}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     <>
-                                        {dayBook.transactions.map((txn, idx) => (
-                                            <TableRow key={txn.id}>
+                                        {/* Opening balance row */}
+                                        <TableRow className="bg-blue-50/60 border-b">
+                                            <TableCell className="text-center text-muted-foreground text-xs">—</TableCell>
+                                            <TableCell className="text-sm font-medium text-blue-700">Opening Balance</TableCell>
+                                            <TableCell className="text-right font-mono font-semibold text-blue-600">
+                                                {INR(dayBook.openingBalance)}
+                                            </TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
+                                        </TableRow>
+
+                                        {filteredTransactions.map((txn, idx) => (
+                                            <TableRow key={txn.id} className="hover:bg-muted/30">
                                                 <TableCell className="text-center text-muted-foreground text-xs">{idx + 1}</TableCell>
-                                                <TableCell>
-                                                    <span
-                                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${txn.type === "receipt"
-                                                                ? "bg-green-100 text-green-700"
-                                                                : "bg-red-100 text-red-700"
-                                                            }`}
-                                                    >
+                                                <TableCell className="text-sm">
+                                                    <div className="flex items-center gap-1.5">
                                                         {txn.type === "receipt" ? (
-                                                            <ArrowDownToLine className="h-3 w-3" />
+                                                            <ArrowDownToLine className="h-3 w-3 text-green-500 flex-shrink-0" />
                                                         ) : (
-                                                            <ArrowUpFromLine className="h-3 w-3" />
+                                                            <ArrowUpFromLine className="h-3 w-3 text-red-500 flex-shrink-0" />
                                                         )}
-                                                        {txn.type === "receipt" ? "IN" : "OUT"}
-                                                    </span>
+                                                        {txn.description || (txn.type === "receipt" ? "Cash Receipt" : "Cash Payment")}
+                                                    </div>
                                                 </TableCell>
-                                                <TableCell className={`text-right font-mono font-semibold ${txn.type === "receipt" ? "text-green-600" : "text-red-600"
-                                                    }`}>
-                                                    {txn.type === "receipt" ? "+" : "−"}{INR(txn.amount)}
+                                                <TableCell className="text-right font-mono font-semibold text-green-600">
+                                                    {txn.type === "receipt" ? INR(txn.amount) : ""}
                                                 </TableCell>
-                                                <TableCell className="text-sm">{txn.description || "—"}</TableCell>
-                                                <TableCell className="text-xs text-muted-foreground">
+                                                <TableCell className="text-right font-mono font-semibold text-red-600">
+                                                    {txn.type === "payment" ? INR(txn.amount) : ""}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground text-center">
                                                     {new Date(txn.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                                                 </TableCell>
                                                 <TableCell>
@@ -269,13 +315,31 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                                                 </TableCell>
                                             </TableRow>
                                         ))}
+
+                                        {/* Totals row */}
                                         <TableRow className="bg-primary/5 border-t-2 font-bold">
-                                            <TableCell colSpan={2} className="text-right text-xs text-muted-foreground">TOTALS</TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="text-green-600 text-xs">Receipts: {INR(dayBook.totalReceipts)}</div>
-                                                <div className="text-red-600 text-xs">Payments: {INR(dayBook.totalPayments)}</div>
+                                            <TableCell></TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">TOTALS</TableCell>
+                                            <TableCell className="text-right font-mono text-green-700">
+                                                {INR(filteredReceipts)}
                                             </TableCell>
-                                            <TableCell colSpan={3}></TableCell>
+                                            <TableCell className="text-right font-mono text-red-700">
+                                                {INR(filteredPayments)}
+                                            </TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
+                                        </TableRow>
+
+                                        {/* Closing balance row */}
+                                        <TableRow className="bg-violet-50/60">
+                                            <TableCell></TableCell>
+                                            <TableCell className="text-sm font-medium text-violet-700">Closing Balance</TableCell>
+                                            <TableCell className="text-right font-mono font-bold text-violet-700">
+                                                {INR(dayBook.closingBalance)}
+                                            </TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
                                         </TableRow>
                                     </>
                                 )}
@@ -319,8 +383,8 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                                 <div>
                                     <span className="text-muted-foreground">Variance:</span>{" "}
                                     <span className={`font-bold ${dayBook.closingBalance - dayBook.systemClosingBalance === 0
-                                            ? "text-green-600"
-                                            : "text-red-600"
+                                        ? "text-green-600"
+                                        : "text-red-600"
                                         }`}>
                                         {dayBook.closingBalance - dayBook.systemClosingBalance >= 0 ? "+" : ""}
                                         {INR(dayBook.closingBalance - dayBook.systemClosingBalance)}

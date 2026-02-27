@@ -2293,29 +2293,40 @@ function RDListTab() {
                             {r.status}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           {!activeInPeriod ? (
                             <span className="text-xs text-muted-foreground">—</span>
                           ) : payment ? (
                             payment.amount >= r.amount ? (
-                              <span
-                                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 cursor-default"
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 rounded-full"
                                 title={`Paid ₹${payment.amount.toLocaleString("en-IN")} on ${format(parseISO(payment.paidDate), "dd MMM yyyy")} by ${payment.collectedByName}`}
+                                onClick={() => { setSheetRD(r); setSheetOpen(true); }}
                               >
                                 Paid ✓
-                              </span>
+                              </Button>
                             ) : (
-                              <span
-                                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 cursor-default"
-                                title={`Partial: ₹${payment.amount.toLocaleString("en-IN")} of ₹${r.amount.toLocaleString("en-IN")} on ${format(parseISO(payment.paidDate), "dd MMM yyyy")} by ${payment.collectedByName}`}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs font-medium bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-full"
+                                title={`Partial: ₹${payment.amount.toLocaleString("en-IN")} of ₹${r.amount.toLocaleString("en-IN")}`}
+                                onClick={() => { setSheetRD(r); setSheetOpen(true); }}
                               >
                                 Partial
-                              </span>
+                              </Button>
                             )
                           ) : (
-                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800">
-                              Pending
-                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2.5 text-xs font-medium"
+                              onClick={() => { setSheetRD(r); setSheetOpen(true); }}
+                            >
+                              Pay Installment
+                            </Button>
                           )}
                         </TableCell>
                       </TableRow>
