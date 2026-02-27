@@ -29,6 +29,8 @@ export const LOAN_TYPES = ["Secured", "Business", "Property", "Personal", "Vehic
 export const LOAN_STATUSES = ["Under Process", "Passed", "Rejected"] as const;
 export const TRANSFER_STATUSES = ["Pending", "Processed", "Done"] as const;
 
+export const LOAN_SOURCES = ["Online", "Direct to Office", "WhatsApp", "Others"] as const;
+
 export const MEMBERSHIP_PLANS = ["600", "300"] as const;
 export const MEMBERSHIP_PRODUCTS = ["SD", "DD", "RD", "FD", "KUTTI NIDHI"] as const;
 export const DD_TYPES = ["Free DD", "DDL", "SDD"] as const;
@@ -45,7 +47,6 @@ export const CRE_CATEGORIES = [
   "NewDailyDeposit",
   "NewRD",
   "NewFD",
-  "LoanBooking",
   "AMC",
 ] as const;
 export const CUSTOMER_NEEDS = [

@@ -7,6 +7,8 @@ export type DatePreset = "today" | "yesterday" | "this-week" | "this-month" | "c
 import {
   CustomerVisit,
   LoanEnquiry,
+  LoanBooking,
+  LoanRepayment,
   FundTransfer,
   Beneficiary,
   CashierRecord,
@@ -55,6 +57,10 @@ interface AppState {
   loanEnquiries: LoanEnquiry[];
   addLoanEnquiry: (enquiry: LoanEnquiry) => void;
   updateLoanStatus: (id: string, status: LoanEnquiry["status"]) => void;
+  loanBookings: LoanBooking[];
+  addLoanBooking: (booking: LoanBooking) => void;
+  loanRepayments: LoanRepayment[];
+  addLoanRepayment: (repayment: LoanRepayment) => void;
   fundTransfers: FundTransfer[];
   addFundTransfer: (transfer: FundTransfer) => void;
   updateTransferStatus: (id: string, status: FundTransfer["status"]) => void;
@@ -124,6 +130,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [dailyReports] = useState<DailyReportRow[]>(initialReports);
   const [customerVisits, setCustomerVisits] = useState<CustomerVisit[]>(initialVisits);
   const [loanEnquiries, setLoanEnquiries] = useState<LoanEnquiry[]>(initialLoans);
+  const [loanBookings, setLoanBookings] = useState<LoanBooking[]>([]);
+  const [loanRepayments, setLoanRepayments] = useState<LoanRepayment[]>([]);
   const [fundTransfers, setFundTransfers] = useState<FundTransfer[]>(initialTransfers);
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(initialBeneficiaries);
   const [cashierRecords, setCashierRecords] = useState<CashierRecord[]>(initialCashier);
@@ -140,6 +148,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setCustomerVisits(loadFromStorage("vibgyor_visits", initialVisits));
     setLoanEnquiries(loadFromStorage("vibgyor_loans", initialLoans));
+    setLoanBookings(loadFromStorage("vibgyor_loanbookings", []));
+    setLoanRepayments(loadFromStorage("vibgyor_loanrepayments", []));
     setFundTransfers(loadFromStorage("vibgyor_transfers", initialTransfers));
     setBeneficiaries(loadFromStorage("vibgyor_beneficiaries", initialBeneficiaries));
     setCashierRecords(loadFromStorage("vibgyor_cashier", initialCashier));
@@ -151,12 +161,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCustomReferrers(loadFromStorage("vibgyor_referrers", []));
     setCustomerAccounts(loadFromStorage("vibgyor_accounts", []));
     setMasterLists(loadFromStorage("vibgyor_master_lists", DEFAULT_MASTER_LISTS));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { localStorage.setItem("vibgyor_data_version", DATA_VERSION); }, []);
   useEffect(() => { localStorage.setItem("vibgyor_visits", JSON.stringify(customerVisits)); }, [customerVisits]);
   useEffect(() => { localStorage.setItem("vibgyor_loans", JSON.stringify(loanEnquiries)); }, [loanEnquiries]);
+  useEffect(() => { localStorage.setItem("vibgyor_loanbookings", JSON.stringify(loanBookings)); }, [loanBookings]);
+  useEffect(() => { localStorage.setItem("vibgyor_loanrepayments", JSON.stringify(loanRepayments)); }, [loanRepayments]);
   useEffect(() => { localStorage.setItem("vibgyor_transfers", JSON.stringify(fundTransfers)); }, [fundTransfers]);
   useEffect(() => { localStorage.setItem("vibgyor_beneficiaries", JSON.stringify(beneficiaries)); }, [beneficiaries]);
   useEffect(() => { localStorage.setItem("vibgyor_cashier", JSON.stringify(cashierRecords)); }, [cashierRecords]);
@@ -179,6 +191,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateLoanStatus = useCallback((id: string, status: LoanEnquiry["status"]) => {
     setLoanEnquiries((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+  }, []);
+
+  const addLoanBooking = useCallback((booking: LoanBooking) => {
+    setLoanBookings((prev) => [...prev, booking]);
+  }, []);
+
+  const addLoanRepayment = useCallback((payment: LoanRepayment) => {
+    setLoanRepayments((prev) => {
+      const idx = prev.findIndex((p) => p.loanBookingId === payment.loanBookingId && p.period === payment.period);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = payment;
+        return next;
+      }
+      return [...prev, payment];
+    });
   }, []);
 
   const addFundTransfer = useCallback((transfer: FundTransfer) => {
@@ -315,6 +343,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         loanEnquiries,
         addLoanEnquiry,
         updateLoanStatus,
+        loanBookings,
+        addLoanBooking,
+        loanRepayments,
+        addLoanRepayment,
         fundTransfers,
         addFundTransfer,
         updateTransferStatus,

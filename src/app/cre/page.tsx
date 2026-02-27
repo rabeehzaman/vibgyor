@@ -54,7 +54,6 @@ const CATEGORY_LABELS: Record<CREDailyEntry["category"], string> = {
   NewDailyDeposit: "New Daily Deposit",
   NewRD: "New Recurring Deposit",
   NewFD: "New Fixed Deposit",
-  LoanBooking: "Loan Booking",
   AMC: "AMC",
 };
 
@@ -63,7 +62,6 @@ const CATEGORY_COLORS: Record<CREDailyEntry["category"], string> = {
   NewDailyDeposit: "bg-blue-50 text-blue-800 border-blue-200",
   NewRD: "bg-green-50 text-green-800 border-green-200",
   NewFD: "bg-yellow-50 text-yellow-800 border-yellow-200",
-  LoanBooking: "bg-red-50 text-red-800 border-red-200",
   AMC: "bg-gray-50 text-gray-800 border-gray-200",
 };
 
@@ -72,7 +70,6 @@ const CATEGORIES: CREDailyEntry["category"][] = [
   "NewDailyDeposit",
   "NewRD",
   "NewFD",
-  "LoanBooking",
   "AMC",
 ];
 
@@ -518,7 +515,7 @@ function EntryFormFields({
         </div>
       )}
 
-      {(category === "NewRD" || category === "NewFD" || category === "LoanBooking") && (
+      {(category === "NewRD" || category === "NewFD") && (
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1">
             <Label>Amount (₹)</Label>
@@ -628,45 +625,6 @@ function EntryFormFields({
         </>
       )}
 
-      {category === "LoanBooking" && (
-        <>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1">
-              <Label>Profit Type</Label>
-              <Select value={form.profitType ?? ""} onValueChange={(v) => set("profitType", v)}>
-                <SelectTrigger className={err("profitType")}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{PROFIT_TYPES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-              </Select>
-              {errors.profitType && <p className="text-xs text-red-500">Required</p>}
-            </div>
-            <div className="grid gap-1">
-              <Label>Profit Rate (%)</Label>
-              <Input type="number" step="0.1" value={form.profitRate ?? ""} onChange={(e) => set("profitRate", e.target.value)} className={err("profitRate")} placeholder="e.g. 12" />
-              {errors.profitRate && <p className="text-xs text-red-500">Required</p>}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1">
-              <Label>Loan Scheme</Label>
-              <Select value={form.loanScheme ?? ""} onValueChange={(v) => set("loanScheme", v)}>
-                <SelectTrigger className={err("loanScheme")}><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {masterLists.loanSchemeCodes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  {loanSchemes.map((s) => <SelectItem key={`loan-${s}`} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {errors.loanScheme && <p className="text-xs text-red-500">Required</p>}
-            </div>
-            <div className="grid gap-1">
-              <Label>Migration (optional)</Label>
-              <Select value={form.migration ?? ""} onValueChange={(v) => set("migration", v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{masterLists.migrationTypes.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 }
@@ -729,13 +687,6 @@ function validateEntryForm(category: CREDailyEntry["category"], form: Record<str
     if (!form.bankCash) e.bankCash = true;
     if (!form.fdType) e.fdType = true;
     if (!form.scheme) e.scheme = true;
-  }
-  if (category === "LoanBooking") {
-    if (!form.amount) e.amount = true;
-    if (!form.tenure) e.tenure = true;
-    if (!form.profitType) e.profitType = true;
-    if (!form.profitRate) e.profitRate = true;
-    if (!form.loanScheme) e.loanScheme = true;
   }
   return e;
 }
@@ -915,7 +866,6 @@ function CategorySection({
               {category === "NewDailyDeposit" && <><TableHead>DD Type</TableHead><TableHead>Area</TableHead></>}
               {category === "NewRD" && <><TableHead>Amount</TableHead><TableHead>Tenure</TableHead><TableHead>Type</TableHead><TableHead>Scheme</TableHead><TableHead>Customer</TableHead><TableHead>Staff</TableHead></>}
               {category === "NewFD" && <><TableHead>Amount</TableHead><TableHead>Tenure</TableHead><TableHead>Type</TableHead><TableHead>Bank/Cash</TableHead><TableHead>FD Type</TableHead><TableHead>Scheme</TableHead></>}
-              {category === "LoanBooking" && <><TableHead>Amount</TableHead><TableHead>Tenure</TableHead><TableHead>Profit</TableHead><TableHead>Rate%</TableHead><TableHead>Scheme</TableHead><TableHead>Migration</TableHead></>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -961,16 +911,6 @@ function CategorySection({
                       <TableCell>{e.bankCash}</TableCell>
                       <TableCell>{e.fdType}</TableCell>
                       <TableCell className="text-xs">{e.scheme}</TableCell>
-                    </>
-                  )}
-                  {category === "LoanBooking" && (
-                    <>
-                      <TableCell className="font-mono">₹{e.amount?.toLocaleString("en-IN")}</TableCell>
-                      <TableCell className="text-xs">{e.tenure}</TableCell>
-                      <TableCell>{e.profitType}</TableCell>
-                      <TableCell>{e.profitRate}%</TableCell>
-                      <TableCell>{e.loanScheme}</TableCell>
-                      <TableCell className="text-xs">{e.migration ?? "—"}</TableCell>
                     </>
                   )}
                 </TableRow>
@@ -1377,10 +1317,10 @@ function MasterAddPaymentDialog({
   const activeRDs = rdList.filter((r) => r.status === "Active");
   const filteredCombo = rdSearch
     ? activeRDs.filter(
-        (r) =>
-          r.accountNumber.toLowerCase().includes(rdSearch.toLowerCase()) ||
-          r.customerName.toLowerCase().includes(rdSearch.toLowerCase())
-      )
+      (r) =>
+        r.accountNumber.toLowerCase().includes(rdSearch.toLowerCase()) ||
+        r.customerName.toLowerCase().includes(rdSearch.toLowerCase())
+    )
     : activeRDs;
 
   const reset = () => {
@@ -1701,9 +1641,9 @@ function RDDetailSheet({
               <span className={cn(
                 "text-xs px-1.5 py-0.5 rounded-full font-medium",
                 monthsLeft < 0 ? "bg-gray-100 text-gray-600" :
-                monthsLeft < 1 ? "bg-red-100 text-red-700" :
-                monthsLeft <= 6 ? "bg-yellow-100 text-yellow-700" :
-                "bg-green-100 text-green-700"
+                  monthsLeft < 1 ? "bg-red-100 text-red-700" :
+                    monthsLeft <= 6 ? "bg-yellow-100 text-yellow-700" :
+                      "bg-green-100 text-green-700"
               )}>
                 {monthsLeft < 0 ? "Matured" : `${monthsLeft}m left`}
               </span>
@@ -2285,10 +2225,10 @@ function RDListTab() {
                       {search
                         ? "No results found"
                         : viewMode === "defaulters"
-                        ? "No defaulters for this period"
-                        : viewMode === "paid"
-                        ? "No paid RDs for this period"
-                        : "No RDs recorded"}
+                          ? "No defaulters for this period"
+                          : viewMode === "paid"
+                            ? "No paid RDs for this period"
+                            : "No RDs recorded"}
                     </TableCell>
                   </TableRow>
                 ) : (

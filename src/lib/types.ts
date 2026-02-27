@@ -39,16 +39,51 @@ export interface CustomerVisit {
 
 export type LoanType = "Secured" | "Business" | "Property" | "Personal" | "Vehicle";
 export type LoanStatus = "Under Process" | "Passed" | "Rejected";
+export type ProfitMethod = "Flat" | "Diminishing";
+export type LoanSource = "Online" | "Direct to Office" | "WhatsApp" | "Others";
 
 export interface LoanEnquiry {
   id: string;
   date: string;
   customerName: string;
+  entryCode: string;
+  source: LoanSource;
+  purpose: string;
   loanType: LoanType;
   amount: number;
+  durationMonths: number;
+  profitMethod: ProfitMethod;
+  profitRatio: number;
+  loanScheme: string;
   staffId: string;
   staffName: string;
   status: LoanStatus;
+}
+
+export interface LoanBooking {
+  id: string;
+  date: string;
+  customerName: string;
+  startDate: string;
+  endDate: string;
+  fullLoanAmount: number;
+  emiAmount: number;
+  tenure: string;
+  loanScheme: string;
+  careOfId: string;
+  careOfName: string;
+  status: "Active" | "Closed";
+}
+
+export interface LoanRepayment {
+  id: string;
+  loanBookingId: string;
+  period: string; // "YYYY-MM"
+  amountPaid: number;
+  paidDate: string;
+  collectedBy: string;
+  collectedByName: string;
+  remarks?: string;
 }
 
 export interface CashierRecord {
@@ -111,7 +146,7 @@ export interface RDPayment {
 export interface CREDailyEntry {
   id: string;
   date: string;
-  category: "NewMembership" | "NewDailyDeposit" | "NewRD" | "NewFD" | "LoanBooking" | "AMC";
+  category: "NewMembership" | "NewDailyDeposit" | "NewRD" | "NewFD" | "AMC";
   accountNumber: string;
   referredBy: string;
   // NewMembership
