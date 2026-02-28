@@ -96,7 +96,7 @@ export default function LooseDenomination({ state, onUpdate }: LooseDenomination
     return (
         <div className="space-y-4">
             {/* Summary Cards */}
-            <div className="grid gap-3 grid-cols-3">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
                 <Card className="border-l-4 border-l-emerald-500">
                     <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-4">
                         <CardTitle className="text-xs font-medium text-muted-foreground">Notes Total</CardTitle>

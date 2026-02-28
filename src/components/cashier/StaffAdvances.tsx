@@ -122,7 +122,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                 <CardContent className="px-4 pb-3">
                     {/* Add Shortage Form */}
                     <div className="flex flex-wrap items-end gap-2 mb-3 pb-3 border-b">
-                        <div className="min-w-[140px]">
+                        <div className="w-full sm:w-auto sm:min-w-[140px]">
                             <label className="text-xs text-muted-foreground mb-1 block">Staff Member</label>
                             <Select value={shortStaffId} onValueChange={setShortStaffId}>
                                 <SelectTrigger className="h-8 text-xs">
@@ -137,7 +137,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="min-w-[100px]">
+                        <div className="w-full sm:w-auto sm:min-w-[100px]">
                             <label className="text-xs text-muted-foreground mb-1 block">Amount (₹)</label>
                             <Input
                                 type="number"
@@ -222,7 +222,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                 <CardContent className="px-4 pb-3">
                     {/* Add Advance Form */}
                     <div className="flex flex-wrap items-end gap-2 mb-3 pb-3 border-b">
-                        <div className="min-w-[140px]">
+                        <div className="w-full sm:w-auto sm:min-w-[140px]">
                             <label className="text-xs text-muted-foreground mb-1 block">Staff / Name</label>
                             <Select value={advStaffId} onValueChange={setAdvStaffId}>
                                 <SelectTrigger className="h-8 text-xs">
@@ -237,7 +237,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="min-w-[140px]">
+                        <div className="w-full sm:w-auto sm:min-w-[140px]">
                             <label className="text-xs text-muted-foreground mb-1 block">Category</label>
                             <Select value={advCategory} onValueChange={setAdvCategory}>
                                 <SelectTrigger className="h-8 text-xs">
@@ -252,7 +252,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="min-w-[100px]">
+                        <div className="w-full sm:w-auto sm:min-w-[100px]">
                             <label className="text-xs text-muted-foreground mb-1 block">Amount (₹)</label>
                             <Input
                                 type="number"

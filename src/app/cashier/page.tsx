@@ -85,20 +85,20 @@ export default function CashierPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Cashier</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold">Cashier</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Cash Management — {displayDate}
           </p>
         </div>
-        <Button onClick={handleSave}>
-          <Save className="mr-2 h-4 w-4" /> Save
+        <Button size="sm" onClick={handleSave}>
+          <Save className="mr-1.5 h-3.5 w-3.5" /> Save
         </Button>
       </div>
 
       {/* Quick Summary Bar */}
       <Card className="bg-gradient-to-r from-slate-50 to-slate-100 border">
         <CardContent className="py-2.5 px-4">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <div className="flex items-center gap-1.5">
               <BookOpen className="h-3.5 w-3.5 text-violet-500" />
               <span className="text-muted-foreground">Day Book:</span>
@@ -114,7 +114,7 @@ export default function CashierPage() {
               <span className="text-muted-foreground">Loose:</span>
               <span className="font-bold text-emerald-600">{INR(looseTotal)}</span>
             </div>
-            <div className="flex items-center gap-1.5 ml-auto">
+            <div className="flex items-center gap-1.5 sm:ml-auto">
               {dayBookClosing > 0 || physicalTotal > 0 ? (
                 isBalanced ? (
                   <>
@@ -142,7 +142,7 @@ export default function CashierPage() {
 
       {/* Tabbed Content */}
       <Tabs defaultValue="daybook" className="w-full">
-        <TabsList className="w-full grid grid-cols-5 h-10">
+        <TabsList className="w-full grid grid-cols-5 h-auto sm:h-10">
           <TabsTrigger value="daybook" className="text-xs gap-1">
             <BookOpen className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Day Book</span>

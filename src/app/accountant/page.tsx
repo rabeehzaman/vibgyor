@@ -143,7 +143,7 @@ export default function AccountantPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Accountant</h2>
+          <h2 className="text-xl sm:text-2xl font-bold">Accountant</h2>
           <p className="text-sm text-muted-foreground">
             Fund Transfers -{" "}
             {selectedDate === selectedDateEnd
@@ -153,9 +153,9 @@ export default function AccountantPage() {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setErrors({}); }}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" />New Transfer</Button>
+            <Button size="sm" className="shrink-0"><Plus className="mr-1.5 h-3.5 w-3.5" />New Transfer</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>New Fund Transfer</DialogTitle>
             </DialogHeader>
@@ -171,7 +171,7 @@ export default function AccountantPage() {
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[350px] p-0">
+                    <PopoverContent className="w-[min(350px,90vw)] p-0">
                       <Command>
                         <CommandInput placeholder="Search beneficiary..." />
                         <CommandList>
@@ -282,7 +282,7 @@ export default function AccountantPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Balance</CardTitle>

@@ -474,7 +474,7 @@ function EntryFormFields({
       </div>
 
       {category === "NewMembership" && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1">
             <Label>Plan</Label>
             <Select value={form.plan ?? ""} onValueChange={(v) => set("plan", v)}>
@@ -495,7 +495,7 @@ function EntryFormFields({
       )}
 
       {category === "NewDailyDeposit" && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1">
             <Label>DD Type</Label>
             <Select value={form.ddType ?? ""} onValueChange={(v) => set("ddType", v)}>
@@ -516,7 +516,7 @@ function EntryFormFields({
       )}
 
       {(category === "NewRD" || category === "NewFD") && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="grid gap-1">
             <Label>Amount (₹)</Label>
             <Input type="number" value={form.amount ?? ""} onChange={(e) => set("amount", e.target.value)} className={err("amount")} placeholder="0" />
@@ -558,7 +558,7 @@ function EntryFormFields({
             {errors.scheme && <p className="text-xs text-red-500">Required</p>}
           </div>
           {/* NewRD-specific customer + staff fields */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Customer Name</Label>
               <Input
@@ -596,7 +596,7 @@ function EntryFormFields({
 
       {category === "NewFD" && (
         <>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Bank / Cash</Label>
               <Select value={form.bankCash ?? ""} onValueChange={(v) => set("bankCash", v)}>
@@ -797,7 +797,7 @@ function QuickAddEntryDialog({
           </DialogTitle>
         </DialogHeader>
         {step === "pick" ? (
-          <div className="grid grid-cols-2 gap-3 py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-4">
             {CATEGORIES.map((cat) => (
               <Button
                 key={cat}
@@ -1031,10 +1031,10 @@ function AddMovementDialog({ onAdd }: { onAdd: (m: CustomerMovement) => void }) 
       <DialogTrigger asChild>
         <Button><Plus className="mr-2 h-4 w-4" />Add Movement</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Add Customer Movement</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Customer Name</Label>
               <Input value={form.customerName} onChange={(e) => set("customerName", e.target.value)} className={err("customerName")} placeholder="Full name" />
@@ -1056,7 +1056,7 @@ function AddMovementDialog({ onAdd }: { onAdd: (m: CustomerMovement) => void }) 
             </Select>
             {errors.need && <p className="text-xs text-red-500">Required</p>}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Treated By</Label>
               <Select value={form.treatedBy} onValueChange={(v) => set("treatedBy", v)}>
@@ -1214,7 +1214,7 @@ function AddRDDialog({ schemes, onAdd }: { schemes: Scheme[]; onAdd: (rd: Recurr
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Add Recurring Deposit</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Account Number</Label>
               <Input value={form.accountNumber ?? ""} onChange={(e) => set("accountNumber", e.target.value)} className={err("accountNumber")} placeholder="RD-10050" />
@@ -1226,7 +1226,7 @@ function AddRDDialog({ schemes, onAdd }: { schemes: Scheme[]; onAdd: (rd: Recurr
               {errors.customerName && <p className="text-xs text-red-500">Required</p>}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Mobile Number</Label>
               <Input value={form.mobileNumber ?? ""} onChange={(e) => set("mobileNumber", e.target.value)} className={err("mobileNumber")} placeholder="10 digits" maxLength={10} />
@@ -1238,7 +1238,7 @@ function AddRDDialog({ schemes, onAdd }: { schemes: Scheme[]; onAdd: (rd: Recurr
               {errors.amount && <p className="text-xs text-red-500">Required</p>}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Tenure</Label>
               <Select value={form.tenure ?? ""} onValueChange={(v) => set("tenure", v)}>
@@ -1267,7 +1267,7 @@ function AddRDDialog({ schemes, onAdd }: { schemes: Scheme[]; onAdd: (rd: Recurr
             </Select>
             {errors.scheme && <p className="text-xs text-red-500">Required</p>}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Label>Start Date</Label>
               <Input type="date" value={form.startDate ?? ""} onChange={(e) => set("startDate", e.target.value)} className={err("startDate")} />
@@ -1608,7 +1608,7 @@ function RDDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[520px] sm:max-w-[520px] overflow-y-auto p-0">
+      <SheetContent side="right" className="w-full sm:w-[520px] sm:max-w-[520px] overflow-y-auto p-0">
         {/* Sticky header */}
         <div className="sticky top-0 bg-background border-b px-4 py-3 z-10">
           <SheetHeader>
@@ -2078,7 +2078,7 @@ function RDListTab() {
     <div className="space-y-4">
       {/* Top Controls */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-44">
+        <div className="relative w-full sm:w-44">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9 h-9" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
@@ -2096,7 +2096,7 @@ function RDListTab() {
 
         {/* Staff Filter */}
         <Select value={staffFilter} onValueChange={(v) => { setStaffFilter(v); setSelectedRows(new Set()); }}>
-          <SelectTrigger className="w-36 h-9 text-sm"><SelectValue placeholder="All Staff" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-36 h-9 text-sm"><SelectValue placeholder="All Staff" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Staff</SelectItem>
             {CRE_STAFF.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -2119,7 +2119,7 @@ function RDListTab() {
           ))}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto">
           {selectedRows.size > 0 && (
             <BulkMarkPaidDialog
               selectedRDs={selectedRDObjects}
@@ -2374,15 +2374,15 @@ export default function CREPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold">CRE — Customer Relations Executive</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">CRE — Customer Relations</h2>
         <p className="text-sm text-muted-foreground">{dateLabel}</p>
       </div>
 
       <Tabs defaultValue="daily-report">
-        <TabsList>
-          <TabsTrigger value="daily-report">Daily Report</TabsTrigger>
-          <TabsTrigger value="movements">Customer Movement Register</TabsTrigger>
-          <TabsTrigger value="rd-list">RD List</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="daily-report" className="text-xs sm:text-sm">Daily Report</TabsTrigger>
+          <TabsTrigger value="movements" className="text-xs sm:text-sm">Movement</TabsTrigger>
+          <TabsTrigger value="rd-list" className="text-xs sm:text-sm">RD List</TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily-report" className="mt-4">

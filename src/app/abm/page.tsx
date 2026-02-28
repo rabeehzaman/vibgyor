@@ -26,11 +26,11 @@ export default function ABMPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold">ABM - Marketing</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">ABM - Marketing</h2>
         <p className="text-sm text-muted-foreground">Campaign Management & Marketing Activities</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>

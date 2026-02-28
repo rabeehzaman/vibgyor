@@ -264,7 +264,7 @@ export default function LPOPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">LPO - Loan Processing</h2>
+          <h2 className="text-xl sm:text-2xl font-bold">LPO - Loan Processing</h2>
           <p className="text-sm text-muted-foreground">
             {selectedDate === selectedDateEnd
               ? format(parseISO(selectedDate), "dd MMM yyyy")
@@ -274,10 +274,10 @@ export default function LPOPage() {
       </div>
 
       <Tabs defaultValue="enquiries" className="w-full">
-        <TabsList>
-          <TabsTrigger value="enquiries">Loan Enquiries</TabsTrigger>
-          <TabsTrigger value="bookings">Loan Bookings</TabsTrigger>
-          <TabsTrigger value="repayments">Repayment</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="enquiries" className="text-xs sm:text-sm">Enquiries</TabsTrigger>
+          <TabsTrigger value="bookings" className="text-xs sm:text-sm">Bookings</TabsTrigger>
+          <TabsTrigger value="repayments" className="text-xs sm:text-sm">Repayment</TabsTrigger>
         </TabsList>
 
         <TabsContent value="enquiries" className="space-y-4">
@@ -291,7 +291,7 @@ export default function LPOPage() {
                   <DialogTitle>New Loan Enquiry</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Customer Name</Label>
                       <Input
@@ -314,7 +314,7 @@ export default function LPOPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Source</Label>
                       <Select value={form.source} onValueChange={(v) => { setForm({ ...form, source: v as LoanSource }); setErrors({ ...errors, source: false }); }}>
@@ -340,7 +340,7 @@ export default function LPOPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Loan Scheme</Label>
                       <Input
@@ -364,7 +364,7 @@ export default function LPOPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Profit Method</Label>
                       <Select value={form.profitMethod} onValueChange={(v) => { setForm({ ...form, profitMethod: v as ProfitMethod }); setErrors({ ...errors, profitMethod: false }); }}>
@@ -390,7 +390,7 @@ export default function LPOPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Loan Type</Label>
                       <Select value={form.loanType} onValueChange={(v) => { setForm({ ...form, loanType: v as LoanType }); setErrors({ ...errors, loanType: false }); }}>
@@ -433,7 +433,7 @@ export default function LPOPage() {
             </Dialog>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -540,7 +540,7 @@ export default function LPOPage() {
                   <DialogTitle>New Loan Booking</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Customer Name</Label>
                       <Input
@@ -563,7 +563,7 @@ export default function LPOPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Start Date</Label>
                       <Input
@@ -596,7 +596,7 @@ export default function LPOPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Full Loan Amount</Label>
                       <Input
@@ -631,7 +631,7 @@ export default function LPOPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label>Monthly EMI Amount</Label>
                       <Input
@@ -724,31 +724,33 @@ export default function LPOPage() {
           </Card>
         </TabsContent>
         <TabsContent value="repayments" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="icon"
+                className="h-8 w-8 shrink-0"
                 onClick={() => setRepaymentPeriod((p) => format(subMonths(parseISO(`${p}-01`), 1), "yyyy-MM"))}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="font-semibold w-24 text-center">
+              <span className="font-semibold w-24 text-center text-sm">
                 {format(parseISO(`${repaymentPeriod}-01`), "MMM yyyy")}
               </span>
               <Button
                 variant="outline"
                 size="icon"
+                className="h-8 w-8 shrink-0"
                 onClick={() => setRepaymentPeriod((p) => format(addMonths(parseISO(`${p}-01`), 1), "yyyy-MM"))}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Label className="whitespace-nowrap">Filter by Care Of:</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Label className="whitespace-nowrap text-xs sm:text-sm shrink-0 hidden sm:block">Care Of:</Label>
                 <Select value={careOfFilter} onValueChange={setCareOfFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[160px] h-8 text-xs sm:text-sm">
                     <SelectValue placeholder="All Staff" />
                   </SelectTrigger>
                   <SelectContent>
@@ -759,11 +761,11 @@ export default function LPOPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={() => {
+              <Button size="sm" className="h-8 text-xs sm:text-sm" onClick={() => {
                 setPaymentForm({ loanBookingId: "", customerName: "", expectedEmi: 0, amountPaid: "", paidDate: format(new Date(), "yyyy-MM-dd"), remarks: "" });
                 setPaymentOpen(true);
               }}>
-                <Plus className="mr-2 h-4 w-4" />Add Payment
+                <Plus className="mr-1 h-3.5 w-3.5" />Add Payment
               </Button>
             </div>
           </div>
@@ -843,86 +845,78 @@ export default function LPOPage() {
       </Tabs>
 
       <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{paymentForm.customerName ? `Receive Payment - ${paymentForm.customerName}` : "Receive Payment"}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-2">
             {!paymentForm.loanBookingId && (
-              <div className="flex items-center gap-4">
-                <Label className="w-20 text-right shrink-0">Customer</Label>
-                <div className="flex-1">
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value=""
-                    onChange={(e) => {
-                      const booking = loanBookings.find(b => b.id === e.target.value);
-                      if (booking) {
-                        setPaymentForm(prev => ({
-                          ...prev,
-                          loanBookingId: booking.id,
-                          customerName: booking.customerName,
-                          expectedEmi: booking.emiAmount
-                        }));
-                      }
-                    }}
-                  >
-                    <option value="" disabled>Select a customer</option>
-                    {loanBookings.filter(b => b.status === "Active").length === 0 ? (
-                      <option value="" disabled>No active bookings — create one first</option>
-                    ) : (
-                      loanBookings.filter(b => b.status === "Active").map(b => (
-                        <option key={`pay-${b.id}`} value={b.id}>{b.customerName} — ₹{b.emiAmount.toLocaleString("en-IN")}/mo</option>
-                      ))
-                    )}
-                  </select>
-                </div>
+              <div className="grid gap-2">
+                <Label>Customer</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value=""
+                  onChange={(e) => {
+                    const booking = loanBookings.find(b => b.id === e.target.value);
+                    if (booking) {
+                      setPaymentForm(prev => ({
+                        ...prev,
+                        loanBookingId: booking.id,
+                        customerName: booking.customerName,
+                        expectedEmi: booking.emiAmount
+                      }));
+                    }
+                  }}
+                >
+                  <option value="" disabled>Select a customer</option>
+                  {loanBookings.filter(b => b.status === "Active").length === 0 ? (
+                    <option value="" disabled>No active bookings — create one first</option>
+                  ) : (
+                    loanBookings.filter(b => b.status === "Active").map(b => (
+                      <option key={`pay-${b.id}`} value={b.id}>{b.customerName} — ₹{b.emiAmount.toLocaleString("en-IN")}/mo</option>
+                    ))
+                  )}
+                </select>
               </div>
             )}
             {paymentForm.expectedEmi > 0 && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right text-muted-foreground text-sm">Target EMI</Label>
-                <div className="col-span-3 font-semibold font-mono">₹{paymentForm.expectedEmi.toLocaleString("en-IN")}</div>
+              <div className="grid gap-1">
+                <Label className="text-muted-foreground text-sm">Target EMI</Label>
+                <div className="font-semibold font-mono text-sm">₹{paymentForm.expectedEmi.toLocaleString("en-IN")}</div>
               </div>
             )}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amountPaid" className="text-right">Amount</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="amountPaid">Amount</Label>
               <Input
                 id="amountPaid"
                 type="number"
-                className="col-span-3 font-mono"
+                className="font-mono"
                 value={paymentForm.amountPaid}
                 onChange={(e) => setPaymentForm({ ...paymentForm, amountPaid: e.target.value })}
                 placeholder="Enter amount paid"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paidDate" className="text-right">Date</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="paidDate">Date</Label>
               <Input
                 id="paidDate"
                 type="date"
-                className="col-span-3"
                 value={paymentForm.paidDate}
                 onChange={(e) => setPaymentForm({ ...paymentForm, paidDate: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="remarks" className="text-right">Remarks</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="remarks">Remarks</Label>
               <Input
                 id="remarks"
-                className="col-span-3"
                 value={paymentForm.remarks}
                 onChange={(e) => setPaymentForm({ ...paymentForm, remarks: e.target.value })}
                 placeholder="Optional notes"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4 mt-2">
-              <div className="col-start-2 col-span-3">
-                <Button onClick={handleReceivePayment} className="w-full">
-                  Save Payment
-                </Button>
-              </div>
-            </div>
+            <Button onClick={handleReceivePayment} className="w-full mt-1">
+              Save Payment
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

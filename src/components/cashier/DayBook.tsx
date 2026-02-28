@@ -164,7 +164,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                 </CardHeader>
                 <CardContent className="px-4 pb-3">
                     <div className="flex flex-wrap items-end gap-3">
-                        <div className="flex rounded-lg overflow-hidden border">
+                        <div className="flex rounded-lg overflow-hidden border shrink-0">
                             <button
                                 className={`px-3 py-1.5 text-xs font-semibold transition-colors ${txnType === "receipt"
                                     ? "bg-green-600 text-white"
@@ -186,7 +186,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                                 Payment
                             </button>
                         </div>
-                        <div className="flex-1 min-w-[120px]">
+                        <div className="flex-1 min-w-[120px] sm:min-w-[120px] w-full sm:w-auto">
                             <label className="text-xs text-muted-foreground mb-1 block">Amount (₹)</label>
                             <Input
                                 type="number"
