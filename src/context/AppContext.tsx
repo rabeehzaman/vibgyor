@@ -27,38 +27,22 @@ import {
   LooseRecord,
   StaffShortage,
   StaffAdvance,
+  Ticket,
+  TicketReply,
+  TicketStatus,
 } from "@/lib/types";
 import {
-  createEmptyDailyCashierState,
   recalcDayBook,
   calcLockerBundleTotal,
   calcLockerClosing,
   calcNoteTotal,
   calcCoinTotal,
 } from "@/lib/cashier-utils";
-import {
-  MEMBERSHIP_PLANS,
-  MEMBERSHIP_PRODUCTS,
-  DD_TYPES,
-  COLLECTION_AREAS,
-  TENURE_OPTIONS,
-  MIGRATION_TYPES,
-  CUSTOMER_NEEDS,
-  FD_TYPES,
-  LOAN_SCHEMES_LIST,
-} from "@/lib/constants";
+import * as db from "@/lib/supabase-db";
 import { dailyReports as initialReports } from "@/data/daily-reports";
-import { customerVisits as initialVisits } from "@/data/customer-visits";
-import { loanEnquiries as initialLoans } from "@/data/loan-enquiries";
-import { fundTransfers as initialTransfers } from "@/data/fund-transfers";
-import { beneficiaries as initialBeneficiaries } from "@/data/beneficiaries";
-import { cashierRecords as initialCashier } from "@/data/cashier-records";
-import { creDailyEntries as initialCREEntries } from "@/data/cre-daily-entries";
-import { customerMovements as initialMovements } from "@/data/customer-movements";
-import { rdList as initialRDList } from "@/data/rd-list";
-import { schemes as initialSchemes } from "@/data/schemes";
 
 interface AppState {
+  isLoading: boolean;
   selectedDate: string;
   selectedDateEnd: string;
   datePreset: DatePreset;
@@ -111,155 +95,139 @@ interface AppState {
   addCustomerAccount: (a: CustomerAccount) => void;
   masterLists: MasterLists;
   addToMasterList: (key: keyof MasterLists, value: string) => void;
+  // Tickets
+  tickets: Ticket[];
+  addTicket: (ticket: Ticket) => void;
+  updateTicketStatus: (id: string, status: TicketStatus) => void;
+  assignTicket: (id: string, staffId: string, staffName: string) => void;
+  addTicketReply: (ticketId: string, reply: TicketReply) => void;
+  getTicketByReference: (ref: string) => Ticket | undefined;
 }
 
 const AppContext = createContext<AppState | null>(null);
 
-const DATA_VERSION = "v7"; // bump this to force refresh of mock data
-
 const DEFAULT_MASTER_LISTS: MasterLists = {
-  membershipPlans: [...MEMBERSHIP_PLANS],
-  membershipProducts: [...MEMBERSHIP_PRODUCTS],
-  ddTypes: [...DD_TYPES],
-  collectionAreas: [...COLLECTION_AREAS],
-  tenureOptions: [...TENURE_OPTIONS],
-  migrationTypes: [...MIGRATION_TYPES],
-  customerNeeds: [...CUSTOMER_NEEDS],
-  fdTypes: [...FD_TYPES],
-  loanSchemeCodes: [...LOAN_SCHEMES_LIST],
+  membershipPlans: ["600", "300"],
+  membershipProducts: ["SD", "DD", "RD", "FD", "KUTTI NIDHI"],
+  ddTypes: ["Free DD", "DDL", "SDD"],
+  collectionAreas: ["KOOTTILANGADI-M", "KONDOTTY", "WANDOOR", "MALAPPURAM"],
+  tenureOptions: ["6 months", "12 months", "24 months", "36 months", "60 months"],
+  migrationTypes: ["Migration", "KML", "NIDHI"],
+  customerNeeds: ["RD Enquiry", "FD Renewal", "Loan Query", "Account Opening", "General Enquiry", "Complaint", "Other"],
+  fdTypes: ["FD", "BSFD"],
+  loanSchemeCodes: ["BSL", "EMI", "RSL", "PRL", "GOLD PRL"],
 };
-
-function loadFromStorage<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const storedVersion = localStorage.getItem("vibgyor_data_version");
-    if (storedVersion !== DATA_VERSION) {
-      // Clear stale data when mock data is updated
-      localStorage.removeItem(key);
-      return fallback;
-    }
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 function todayStr() { return format(new Date(), "yyyy-MM-dd"); }
 function monthStartStr() { return format(startOfMonth(new Date()), "yyyy-MM-dd"); }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(monthStartStr);
   const [selectedDateEnd, setSelectedDateEnd] = useState(todayStr);
   const [datePreset, setDatePresetState] = useState<DatePreset>("this-month");
   const [entryDate, setEntryDate] = useState(todayStr);
   const [dailyReports] = useState<DailyReportRow[]>(initialReports);
-  const [customerVisits, setCustomerVisits] = useState<CustomerVisit[]>(initialVisits);
-  const [loanEnquiries, setLoanEnquiries] = useState<LoanEnquiry[]>(initialLoans);
+  const [customerVisits, setCustomerVisits] = useState<CustomerVisit[]>([]);
+  const [loanEnquiries, setLoanEnquiries] = useState<LoanEnquiry[]>([]);
   const [loanBookings, setLoanBookings] = useState<LoanBooking[]>([]);
   const [loanRepayments, setLoanRepayments] = useState<LoanRepayment[]>([]);
-  const [fundTransfers, setFundTransfers] = useState<FundTransfer[]>(initialTransfers);
-  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>(initialBeneficiaries);
-  const [cashierRecords, setCashierRecords] = useState<CashierRecord[]>(initialCashier);
+  const [fundTransfers, setFundTransfers] = useState<FundTransfer[]>([]);
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
+  const [cashierRecords, setCashierRecords] = useState<CashierRecord[]>([]);
   const [dailyCashierStates, setDailyCashierStates] = useState<DailyCashierState[]>([]);
-  const [creEntries, setCREEntries] = useState<CREDailyEntry[]>(initialCREEntries);
-  const [customerMovements, setCustomerMovements] = useState<CustomerMovement[]>(initialMovements);
-  const [rdList, setRDList] = useState<RecurringDeposit[]>(initialRDList);
+  const [creEntries, setCREEntries] = useState<CREDailyEntry[]>([]);
+  const [customerMovements, setCustomerMovements] = useState<CustomerMovement[]>([]);
+  const [rdList, setRDList] = useState<RecurringDeposit[]>([]);
   const [rdPayments, setRDPayments] = useState<RDPayment[]>([]);
-  const [schemes, setSchemes] = useState<Scheme[]>(initialSchemes);
+  const [schemes, setSchemes] = useState<Scheme[]>([]);
   const [customReferrers, setCustomReferrers] = useState<CustomReferrer[]>([]);
   const [customerAccounts, setCustomerAccounts] = useState<CustomerAccount[]>([]);
   const [masterLists, setMasterLists] = useState<MasterLists>(DEFAULT_MASTER_LISTS);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
 
-  // Load persisted data from localStorage after mount (avoids SSR/client hydration mismatch)
+  // ─── Load all data from Supabase on mount ─────
   useEffect(() => {
-    setCustomerVisits(loadFromStorage("vibgyor_visits", initialVisits));
-    setLoanEnquiries(loadFromStorage("vibgyor_loans", initialLoans));
-    setLoanBookings(loadFromStorage("vibgyor_loanbookings", []));
-    setLoanRepayments(loadFromStorage("vibgyor_loanrepayments", []));
-    setFundTransfers(loadFromStorage("vibgyor_transfers", initialTransfers));
-    setBeneficiaries(loadFromStorage("vibgyor_beneficiaries", initialBeneficiaries));
-    setCashierRecords(loadFromStorage("vibgyor_cashier", initialCashier));
-    setDailyCashierStates(loadFromStorage("vibgyor_cashier_v2", []));
-    setCREEntries(loadFromStorage("vibgyor_cre_entries", initialCREEntries));
-    setCustomerMovements(loadFromStorage("vibgyor_movements", initialMovements));
-    setRDList(loadFromStorage("vibgyor_rdlist", initialRDList));
-    setRDPayments(loadFromStorage("vibgyor_rdpayments", []));
-    setSchemes(loadFromStorage("vibgyor_schemes", initialSchemes));
-    setCustomReferrers(loadFromStorage("vibgyor_referrers", []));
-    setCustomerAccounts(loadFromStorage("vibgyor_accounts", []));
-    setMasterLists(loadFromStorage("vibgyor_master_lists", DEFAULT_MASTER_LISTS));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    db.loadAllData()
+      .then((data) => {
+        setCustomerVisits(data.customerVisits);
+        setLoanEnquiries(data.loanEnquiries);
+        setLoanBookings(data.loanBookings);
+        setLoanRepayments(data.loanRepayments);
+        setFundTransfers(data.fundTransfers);
+        setBeneficiaries(data.beneficiaries);
+        setCashierRecords(data.cashierRecords);
+        setDailyCashierStates(data.dailyCashierStates);
+        setCREEntries(data.creEntries);
+        setCustomerMovements(data.customerMovements);
+        setRDList(data.rdList);
+        setRDPayments(data.rdPayments);
+        setSchemes(data.schemes);
+        setCustomReferrers(data.customReferrers);
+        setCustomerAccounts(data.customerAccounts);
+        setMasterLists(data.masterLists);
+        setTickets(data.tickets);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error("[supabase] Failed to load data:", err);
+        setIsLoading(false);
+      });
   }, []);
 
-  useEffect(() => { localStorage.setItem("vibgyor_data_version", DATA_VERSION); }, []);
-  useEffect(() => { localStorage.setItem("vibgyor_visits", JSON.stringify(customerVisits)); }, [customerVisits]);
-  useEffect(() => { localStorage.setItem("vibgyor_loans", JSON.stringify(loanEnquiries)); }, [loanEnquiries]);
-  useEffect(() => { localStorage.setItem("vibgyor_loanbookings", JSON.stringify(loanBookings)); }, [loanBookings]);
-  useEffect(() => { localStorage.setItem("vibgyor_loanrepayments", JSON.stringify(loanRepayments)); }, [loanRepayments]);
-  useEffect(() => { localStorage.setItem("vibgyor_transfers", JSON.stringify(fundTransfers)); }, [fundTransfers]);
-  useEffect(() => { localStorage.setItem("vibgyor_beneficiaries", JSON.stringify(beneficiaries)); }, [beneficiaries]);
-  useEffect(() => { localStorage.setItem("vibgyor_cashier", JSON.stringify(cashierRecords)); }, [cashierRecords]);
-  useEffect(() => { localStorage.setItem("vibgyor_cashier_v2", JSON.stringify(dailyCashierStates)); }, [dailyCashierStates]);
-  useEffect(() => { localStorage.setItem("vibgyor_cre_entries", JSON.stringify(creEntries)); }, [creEntries]);
-  useEffect(() => { localStorage.setItem("vibgyor_movements", JSON.stringify(customerMovements)); }, [customerMovements]);
-  useEffect(() => { localStorage.setItem("vibgyor_rdlist", JSON.stringify(rdList)); }, [rdList]);
-  useEffect(() => { localStorage.setItem("vibgyor_rdpayments", JSON.stringify(rdPayments)); }, [rdPayments]);
-  useEffect(() => { localStorage.setItem("vibgyor_schemes", JSON.stringify(schemes)); }, [schemes]);
-  useEffect(() => { localStorage.setItem("vibgyor_referrers", JSON.stringify(customReferrers)); }, [customReferrers]);
-  useEffect(() => { localStorage.setItem("vibgyor_accounts", JSON.stringify(customerAccounts)); }, [customerAccounts]);
-  useEffect(() => { localStorage.setItem("vibgyor_master_lists", JSON.stringify(masterLists)); }, [masterLists]);
+  // ─── Mutations (update local state + persist to Supabase) ─────
 
   const addCustomerVisit = useCallback((visit: CustomerVisit) => {
     setCustomerVisits((prev) => [...prev, visit]);
+    db.insertCustomerVisit(visit);
   }, []);
 
   const addLoanEnquiry = useCallback((enquiry: LoanEnquiry) => {
     setLoanEnquiries((prev) => [...prev, enquiry]);
+    db.insertLoanEnquiry(enquiry);
   }, []);
 
   const updateLoanStatus = useCallback((id: string, status: LoanEnquiry["status"]) => {
     setLoanEnquiries((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+    db.updateLoanEnquiry(id, { status });
   }, []);
 
   const addLoanBooking = useCallback((booking: LoanBooking) => {
     setLoanBookings((prev) => [...prev, booking]);
+    db.insertLoanBooking(booking);
   }, []);
 
   const addLoanRepayment = useCallback((payment: LoanRepayment) => {
     setLoanRepayments((prev) => {
       const idx = prev.findIndex((p) => p.loanBookingId === payment.loanBookingId && p.period === payment.period);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = payment;
-        return next;
-      }
+      if (idx >= 0) { const next = [...prev]; next[idx] = payment; return next; }
       return [...prev, payment];
     });
+    db.upsertLoanRepayment(payment);
   }, []);
 
   const addFundTransfer = useCallback((transfer: FundTransfer) => {
     setFundTransfers((prev) => [...prev, transfer]);
+    db.insertFundTransfer(transfer);
   }, []);
 
   const updateTransferStatus = useCallback((id: string, status: FundTransfer["status"]) => {
     setFundTransfers((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+    db.updateFundTransfer(id, { status });
   }, []);
 
   const addBeneficiary = useCallback((beneficiary: Beneficiary) => {
     setBeneficiaries((prev) => [...prev, beneficiary]);
+    db.insertBeneficiary(beneficiary);
   }, []);
 
   const updateCashierRecord = useCallback((record: CashierRecord) => {
     setCashierRecords((prev) => {
       const idx = prev.findIndex((r) => r.date === record.date);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = record;
-        return next;
-      }
+      if (idx >= 0) { const next = [...prev]; next[idx] = record; return next; }
       return [...prev, record];
     });
+    db.upsertCashierRecord(record);
   }, []);
 
   // ─── Cashier V2 Actions ─────────────────────
@@ -269,6 +237,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (idx >= 0) { const next = [...prev]; next[idx] = state; return next; }
       return [...prev, state];
     });
+    db.upsertDailyCashierState(state);
   }, []);
 
   const getDailyCashierState = useCallback((date: string): DailyCashierState | undefined => {
@@ -276,230 +245,300 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [dailyCashierStates]);
 
   const addCashTransaction = useCallback((date: string, txn: CashTransaction) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      const updatedDayBook = recalcDayBook({ ...s.dayBook, transactions: [...s.dayBook.transactions, txn] });
-      return { ...s, dayBook: updatedDayBook };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, dayBook: recalcDayBook({ ...s.dayBook, transactions: [...s.dayBook.transactions, txn] }) };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const removeCashTransaction = useCallback((date: string, txnId: string) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      const updatedDayBook = recalcDayBook({ ...s.dayBook, transactions: s.dayBook.transactions.filter((t) => t.id !== txnId) });
-      return { ...s, dayBook: updatedDayBook };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, dayBook: recalcDayBook({ ...s.dayBook, transactions: s.dayBook.transactions.filter((t) => t.id !== txnId) }) };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const updateLockerRecord = useCallback((date: string, locker: LockerRecord) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      const closing = calcLockerClosing(locker.openingDenominations, locker.deposited, locker.withdrawn);
-      const updatedLocker: LockerRecord = {
-        ...locker,
-        closingDenominations: closing,
-        openingTotal: calcLockerBundleTotal(locker.openingDenominations),
-        depositedTotal: calcLockerBundleTotal(locker.deposited),
-        withdrawnTotal: calcLockerBundleTotal(locker.withdrawn),
-        closingTotal: calcLockerBundleTotal(closing),
-      };
-      return { ...s, locker: updatedLocker };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        const closing = calcLockerClosing(locker.openingDenominations, locker.deposited, locker.withdrawn);
+        const updatedLocker: LockerRecord = {
+          ...locker,
+          closingDenominations: closing,
+          openingTotal: calcLockerBundleTotal(locker.openingDenominations),
+          depositedTotal: calcLockerBundleTotal(locker.deposited),
+          withdrawnTotal: calcLockerBundleTotal(locker.withdrawn),
+          closingTotal: calcLockerBundleTotal(closing),
+        };
+        return { ...s, locker: updatedLocker };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const updateLooseRecord = useCallback((date: string, loose: LooseRecord) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      const updatedLoose: LooseRecord = {
-        ...loose,
-        notesTotal: calcNoteTotal(loose.noteDenominations),
-        coinsTotal: calcCoinTotal(loose.coinDenominations),
-        grandTotal: calcNoteTotal(loose.noteDenominations) + calcCoinTotal(loose.coinDenominations),
-      };
-      return { ...s, loose: updatedLoose };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        const updatedLoose: LooseRecord = {
+          ...loose,
+          notesTotal: calcNoteTotal(loose.noteDenominations),
+          coinsTotal: calcCoinTotal(loose.coinDenominations),
+          grandTotal: calcNoteTotal(loose.noteDenominations) + calcCoinTotal(loose.coinDenominations),
+        };
+        return { ...s, loose: updatedLoose };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const addStaffShortage = useCallback((date: string, shortage: StaffShortage) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      return { ...s, reconciliation: { ...s.reconciliation, staffShortages: [...s.reconciliation.staffShortages, shortage] } };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, reconciliation: { ...s.reconciliation, staffShortages: [...s.reconciliation.staffShortages, shortage] } };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const removeStaffShortage = useCallback((date: string, shortageId: string) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      return { ...s, reconciliation: { ...s.reconciliation, staffShortages: s.reconciliation.staffShortages.filter((sh) => sh.id !== shortageId) } };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, reconciliation: { ...s.reconciliation, staffShortages: s.reconciliation.staffShortages.filter((sh) => sh.id !== shortageId) } };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const addStaffAdvance = useCallback((date: string, advance: StaffAdvance) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      return { ...s, staffAdvances: [...s.staffAdvances, advance] };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, staffAdvances: [...s.staffAdvances, advance] };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const removeStaffAdvance = useCallback((date: string, advanceId: string) => {
-    setDailyCashierStates((prev) => prev.map((s) => {
-      if (s.date !== date) return s;
-      return { ...s, staffAdvances: s.staffAdvances.filter((a) => a.id !== advanceId) };
-    }));
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, staffAdvances: s.staffAdvances.filter((a) => a.id !== advanceId) };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
   }, []);
 
   const addCREEntry = useCallback((entry: CREDailyEntry) => {
     setCREEntries((prev) => [...prev, entry]);
+    db.insertCREEntry(entry);
     if (entry.category === "NewRD" && entry.customerName) {
-      setRDList((prev) => [
-        ...prev,
-        {
-          id: `rd${Date.now()}`,
-          accountNumber: entry.accountNumber,
-          customerName: entry.customerName!,
-          mobileNumber: entry.mobileNumber ?? "",
-          amount: entry.amount ?? 0,
-          tenure: entry.tenure ?? "",
-          freshRenewal: entry.freshRenewal ?? "Fresh",
-          scheme: entry.scheme ?? "",
-          startDate: entry.date,
-          staffId: entry.staffId ?? "",
-          staffName: entry.staffName ?? "",
-          status: "Active",
-        },
-      ]);
+      const newRD: RecurringDeposit = {
+        id: `rd${Date.now()}`,
+        accountNumber: entry.accountNumber,
+        customerName: entry.customerName!,
+        mobileNumber: entry.mobileNumber ?? "",
+        amount: entry.amount ?? 0,
+        tenure: entry.tenure ?? "",
+        freshRenewal: entry.freshRenewal ?? "Fresh",
+        scheme: entry.scheme ?? "",
+        startDate: entry.date,
+        staffId: entry.staffId ?? "",
+        staffName: entry.staffName ?? "",
+        status: "Active",
+      };
+      setRDList((prev) => [...prev, newRD]);
+      db.insertRD(newRD);
     }
   }, []);
 
   const addCustomerMovement = useCallback((m: CustomerMovement) => {
     setCustomerMovements((prev) => [...prev, m]);
+    db.insertCustomerMovement(m);
   }, []);
 
   const addRD = useCallback((rd: RecurringDeposit) => {
     setRDList((prev) => [...prev, rd]);
+    db.insertRD(rd);
   }, []);
 
   const updateRDStatus = useCallback((id: string, status: RecurringDeposit["status"]) => {
     setRDList((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    db.updateRD(id, { status });
   }, []);
 
   const addRDPayment = useCallback((payment: RDPayment) => {
     setRDPayments((prev) => {
       const idx = prev.findIndex((p) => p.rdId === payment.rdId && p.period === payment.period);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = payment;
-        return next;
-      }
+      if (idx >= 0) { const next = [...prev]; next[idx] = payment; return next; }
       return [...prev, payment];
     });
+    db.upsertRDPayment(payment);
   }, []);
 
   const addScheme = useCallback((scheme: Scheme) => {
     setSchemes((prev) => [...prev, scheme]);
+    db.insertScheme(scheme);
   }, []);
 
   const addCustomReferrer = useCallback((r: CustomReferrer) => {
     setCustomReferrers((prev) => [...prev, r]);
+    db.insertCustomReferrer(r);
   }, []);
 
   const addCustomerAccount = useCallback((a: CustomerAccount) => {
     setCustomerAccounts((prev) => [...prev, a]);
+    db.insertCustomerAccount(a);
   }, []);
 
   const addToMasterList = useCallback((key: keyof MasterLists, value: string) => {
-    setMasterLists((prev) => ({ ...prev, [key]: [...prev[key], value] }));
+    setMasterLists((prev) => {
+      const next = { ...prev, [key]: [...prev[key], value] };
+      db.upsertMasterLists(next);
+      return next;
+    });
   }, []);
+
+  // ─── Auto-refresh tickets every 15s ────────────
+  useEffect(() => {
+    if (isLoading) return;
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await db.fetchTickets();
+        setTickets(fresh);
+      } catch (err) {
+        console.error("[supabase] ticket poll error:", err);
+      }
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  // ─── Ticket Actions ───────────────────────────
+  const addTicket = useCallback((ticket: Ticket) => {
+    setTickets((prev) => [...prev, ticket]);
+    db.insertTicket(ticket);
+  }, []);
+
+  const updateTicketStatus = useCallback((id: string, status: TicketStatus) => {
+    const now = new Date().toISOString();
+    const updates: Record<string, unknown> = { status, updatedAt: now };
+    if (status === "Resolved") updates.resolvedAt = now;
+    if (status === "Closed") updates.closedAt = now;
+    setTickets((prev) => prev.map((t) => {
+      if (t.id !== id) return t;
+      return { ...t, ...updates } as Ticket;
+    }));
+    db.updateTicket(id, updates);
+  }, []);
+
+  const assignTicket = useCallback((id: string, staffId: string, staffName: string) => {
+    const now = new Date().toISOString();
+    setTickets((prev) => prev.map((t) =>
+      t.id === id ? { ...t, assignedTo: staffId, assignedToName: staffName, updatedAt: now } : t
+    ));
+    db.updateTicket(id, { assignedTo: staffId, assignedToName: staffName, updatedAt: now });
+  }, []);
+
+  const addTicketReply = useCallback((ticketId: string, reply: TicketReply) => {
+    const now = new Date().toISOString();
+    setTickets((prev) => prev.map((t) =>
+      t.id === ticketId ? { ...t, replies: [...t.replies, reply], updatedAt: now } : t
+    ));
+    db.insertTicketReply(reply);
+    db.updateTicket(ticketId, { updatedAt: now });
+  }, []);
+
+  const getTicketByReference = useCallback((ref: string): Ticket | undefined => {
+    return tickets.find((t) => t.referenceNumber === ref);
+  }, [tickets]);
 
   const setDatePreset = useCallback((p: Exclude<DatePreset, "custom">) => {
     const t = todayStr();
     if (p === "today") {
-      setSelectedDate(t);
-      setSelectedDateEnd(t);
-      setEntryDate(t);
+      setSelectedDate(t); setSelectedDateEnd(t); setEntryDate(t);
     } else if (p === "yesterday") {
       const y = format(subDays(new Date(), 1), "yyyy-MM-dd");
-      setSelectedDate(y);
-      setSelectedDateEnd(y);
-      setEntryDate(y);
+      setSelectedDate(y); setSelectedDateEnd(y); setEntryDate(y);
     } else if (p === "this-week") {
-      const ws = format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
-      setSelectedDate(ws);
-      setSelectedDateEnd(t);
-      setEntryDate(t);
+      setSelectedDate(format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd"));
+      setSelectedDateEnd(t); setEntryDate(t);
     } else if (p === "this-month") {
-      const ms = format(startOfMonth(new Date()), "yyyy-MM-dd");
-      setSelectedDate(ms);
-      setSelectedDateEnd(t);
-      setEntryDate(t);
+      setSelectedDate(format(startOfMonth(new Date()), "yyyy-MM-dd"));
+      setSelectedDateEnd(t); setEntryDate(t);
     }
     setDatePresetState(p);
   }, []);
 
   const setCustomDate = useCallback((date: string) => {
-    setSelectedDate(date);
-    setSelectedDateEnd(date);
-    setEntryDate(date);
+    setSelectedDate(date); setSelectedDateEnd(date); setEntryDate(date);
     setDatePresetState("custom");
   }, []);
 
   return (
     <AppContext.Provider
       value={{
-        selectedDate,
-        selectedDateEnd,
-        datePreset,
-        entryDate,
-        setDatePreset,
-        setCustomDate,
-        dailyReports,
-        customerVisits,
-        addCustomerVisit,
-        loanEnquiries,
-        addLoanEnquiry,
-        updateLoanStatus,
-        loanBookings,
-        addLoanBooking,
-        loanRepayments,
-        addLoanRepayment,
-        fundTransfers,
-        addFundTransfer,
-        updateTransferStatus,
-        beneficiaries,
-        addBeneficiary,
-        cashierRecords,
-        updateCashierRecord,
-        dailyCashierStates,
-        saveDailyCashierState,
-        getDailyCashierState,
-        addCashTransaction,
-        removeCashTransaction,
-        updateLockerRecord,
-        updateLooseRecord,
-        addStaffShortage,
-        removeStaffShortage,
-        addStaffAdvance,
-        removeStaffAdvance,
-        creEntries,
-        addCREEntry,
-        customerMovements,
-        addCustomerMovement,
-        rdList,
-        addRD,
-        updateRDStatus,
-        rdPayments,
-        addRDPayment,
-        schemes,
-        addScheme,
-        customReferrers,
-        addCustomReferrer,
-        customerAccounts,
-        addCustomerAccount,
-        masterLists,
-        addToMasterList,
+        isLoading,
+        selectedDate, selectedDateEnd, datePreset, entryDate,
+        setDatePreset, setCustomDate,
+        dailyReports, customerVisits, addCustomerVisit,
+        loanEnquiries, addLoanEnquiry, updateLoanStatus,
+        loanBookings, addLoanBooking,
+        loanRepayments, addLoanRepayment,
+        fundTransfers, addFundTransfer, updateTransferStatus,
+        beneficiaries, addBeneficiary,
+        cashierRecords, updateCashierRecord,
+        dailyCashierStates, saveDailyCashierState, getDailyCashierState,
+        addCashTransaction, removeCashTransaction,
+        updateLockerRecord, updateLooseRecord,
+        addStaffShortage, removeStaffShortage,
+        addStaffAdvance, removeStaffAdvance,
+        creEntries, addCREEntry,
+        customerMovements, addCustomerMovement,
+        rdList, addRD, updateRDStatus,
+        rdPayments, addRDPayment,
+        schemes, addScheme,
+        customReferrers, addCustomReferrer,
+        customerAccounts, addCustomerAccount,
+        masterLists, addToMasterList,
+        tickets, addTicket, updateTicketStatus, assignTicket, addTicketReply, getTicketByReference,
       }}
     >
-      {children}
+      {isLoading ? (
+        <div className="flex h-screen items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </AppContext.Provider>
   );
 }

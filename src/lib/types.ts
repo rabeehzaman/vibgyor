@@ -327,3 +327,49 @@ export interface MasterLists {
   fdTypes: string[];
   loanSchemeCodes: string[];
 }
+
+// ─── TICKET SYSTEM ──────────────────────────
+export type TicketType =
+  | "BalanceEnquiry"
+  | "TransferRequest"
+  | "ChequeBookRequest"
+  | "PassbookRequest"
+  | "DDBookRequest"
+  | "MobileNumberChange"
+  | "AccountDetails"
+  | "CurrentMobileNumber"
+  | "Complaint"
+  | "LoanStatusInquiry"
+  | "FDRDMaturityInquiry";
+
+export type TicketStatus = "Open" | "In Progress" | "Resolved" | "Closed";
+export type TicketPriority = "Low" | "Medium" | "High" | "Urgent";
+
+export interface TicketReply {
+  id: string;
+  ticketId: string;
+  message: string;
+  author: "customer" | "staff";
+  authorName: string;
+  authorId?: string;
+  timestamp: string;
+}
+
+export interface Ticket {
+  id: string;
+  referenceNumber: string;
+  type: TicketType;
+  status: TicketStatus;
+  priority: TicketPriority;
+  customerName: string;
+  customerMobile: string;
+  accountNumber: string;
+  details: Record<string, string | number>;
+  createdAt: string;
+  updatedAt: string;
+  assignedTo?: string;
+  assignedToName?: string;
+  replies: TicketReply[];
+  resolvedAt?: string;
+  closedAt?: string;
+}

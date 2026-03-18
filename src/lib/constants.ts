@@ -82,3 +82,65 @@ export const NAV_ITEMS = [
   { href: "/cashier", label: "Cashier", icon: "Wallet" },
   { href: "/accountant", label: "Accountant", icon: "ArrowLeftRight" },
 ] as const;
+
+// ─── TICKET SYSTEM ──────────────────────────
+import { TicketType, TicketPriority, Department } from "./types";
+
+export const TICKET_TYPES: TicketType[] = [
+  "BalanceEnquiry",
+  "TransferRequest",
+  "ChequeBookRequest",
+  "PassbookRequest",
+  "DDBookRequest",
+  "MobileNumberChange",
+  "AccountDetails",
+  "CurrentMobileNumber",
+  "Complaint",
+  "LoanStatusInquiry",
+  "FDRDMaturityInquiry",
+];
+
+export const TICKET_TYPE_LABELS: Record<TicketType, string> = {
+  BalanceEnquiry: "Balance Enquiry",
+  TransferRequest: "Fund Transfer",
+  ChequeBookRequest: "Cheque Book Request",
+  PassbookRequest: "Passbook Request",
+  DDBookRequest: "DD Book Request",
+  MobileNumberChange: "Mobile Number Change",
+  AccountDetails: "Account Details",
+  CurrentMobileNumber: "Current Mobile Number",
+  Complaint: "Complaint",
+  LoanStatusInquiry: "Loan Status Inquiry",
+  FDRDMaturityInquiry: "FD/RD Maturity Inquiry",
+};
+
+export const TICKET_STATUSES = ["Open", "In Progress", "Resolved", "Closed"] as const;
+export const TICKET_PRIORITIES = ["Low", "Medium", "High", "Urgent"] as const;
+
+export const TICKET_TYPE_DEFAULT_PRIORITY: Record<TicketType, TicketPriority> = {
+  BalanceEnquiry: "Low",
+  TransferRequest: "High",
+  ChequeBookRequest: "Medium",
+  PassbookRequest: "Low",
+  DDBookRequest: "Medium",
+  MobileNumberChange: "Medium",
+  AccountDetails: "Low",
+  CurrentMobileNumber: "Low",
+  Complaint: "High",
+  LoanStatusInquiry: "Medium",
+  FDRDMaturityInquiry: "Medium",
+};
+
+export const TICKET_TYPE_DEPARTMENT: Record<TicketType, Department> = {
+  BalanceEnquiry: "CRE",
+  TransferRequest: "ACCOUNTANT",
+  ChequeBookRequest: "CRE",
+  PassbookRequest: "CRE",
+  DDBookRequest: "CRE",
+  MobileNumberChange: "ABM",
+  AccountDetails: "CRE",
+  CurrentMobileNumber: "CRE",
+  Complaint: "ABM",
+  LoanStatusInquiry: "LPO",
+  FDRDMaturityInquiry: "CRE",
+};

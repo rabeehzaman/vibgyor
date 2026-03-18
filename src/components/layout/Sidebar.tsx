@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useApp } from "@/context/AppContext";
 import {
   LayoutDashboard,
   Users,
@@ -10,6 +11,7 @@ import {
   Megaphone,
   Wallet,
   ArrowLeftRight,
+  MessageSquareText,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,7 @@ const icons = {
   Megaphone,
   Wallet,
   ArrowLeftRight,
+  MessageSquareText,
 } as const;
 
 const NAV_ITEMS = [
@@ -30,6 +33,7 @@ const NAV_ITEMS = [
   { href: "/abm", label: "ABM", icon: "Megaphone" as const, description: "Marketing" },
   { href: "/cashier", label: "Cashier", icon: "Wallet" as const, description: "Cash Management" },
   { href: "/accountant", label: "Accountant", icon: "ArrowLeftRight" as const, description: "Fund Transfers" },
+  { href: "/tickets", label: "Tickets", icon: "MessageSquareText" as const, description: "Customer Requests" },
 ];
 
 interface SidebarProps {
@@ -39,6 +43,8 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { tickets } = useApp();
+  const openTicketCount = tickets.filter((t) => t.status === "Open" || t.status === "In Progress").length;
 
   return (
     <>
@@ -78,6 +84,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               item.href === "/"
                 ? pathname === "/"
                 : pathname === item.href || pathname.startsWith(item.href + "/");
+            const showBadge = item.href === "/tickets" && openTicketCount > 0;
             return (
               <Link
                 key={item.href}
@@ -91,8 +98,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <div>
-                  <div className="font-medium">{item.label}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{item.label}</span>
+                    {showBadge && (
+                      <span className={cn(
+                        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold",
+                        active ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground"
+                      )}>
+                        {openTicketCount}
+                      </span>
+                    )}
+                  </div>
                   <div
                     className={cn(
                       "text-xs",
