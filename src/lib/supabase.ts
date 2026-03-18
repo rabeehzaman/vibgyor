@@ -13,10 +13,3 @@ export function getSupabase(): SupabaseClient {
   }
   return _supabase
 }
-
-// Backward-compatible export — lazy getter
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(_target, prop) {
-    return (getSupabase() as any)[prop]
-  },
-})

@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 import {
   CustomerVisit,
   LoanEnquiry,
@@ -65,7 +65,7 @@ function toCamel<T>(obj: Record<string, unknown>): T {
 // ─── GENERIC HELPERS ─────────────────────────────
 
 async function fetchAll<T>(table: string): Promise<T[]> {
-  const { data, error } = await supabase.from(table).select("*");
+  const { data, error } = await getSupabase().from(table).select("*");
   if (error) {
     console.error(`[supabase] fetch ${table}:`, error.message);
     return [];
@@ -77,24 +77,24 @@ async function fetchAll<T>(table: string): Promise<T[]> {
 function asRecord(obj: any): Record<string, unknown> { return obj as Record<string, unknown>; }
 
 async function insertOne<T>(table: string, row: T): Promise<void> {
-  const { error } = await supabase.from(table).insert(toSnake(asRecord(row)));
+  const { error } = await getSupabase().from(table).insert(toSnake(asRecord(row)));
   if (error) console.error(`[supabase] insert ${table}:`, error.message);
 }
 
 async function upsertOne<T>(table: string, row: T): Promise<void> {
-  const { error } = await supabase.from(table).upsert(toSnake(asRecord(row)));
+  const { error } = await getSupabase().from(table).upsert(toSnake(asRecord(row)));
   if (error) console.error(`[supabase] upsert ${table}:`, error.message);
 }
 
 async function updateById(table: string, id: string, updates: Record<string, unknown>): Promise<void> {
-  const { error } = await supabase.from(table).update(toSnake(updates)).eq("id", id);
+  const { error } = await getSupabase().from(table).update(toSnake(updates)).eq("id", id);
   if (error) console.error(`[supabase] update ${table}:`, error.message);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function bulkInsert(table: string, rows: any[]): Promise<void> {
   if (rows.length === 0) return;
-  const { error } = await supabase.from(table).upsert(
+  const { error } = await getSupabase().from(table).upsert(
     rows.map((r) => toSnake(asRecord(r))),
     { ignoreDuplicates: true }
   );
@@ -115,7 +115,7 @@ export const insertLoanBooking = (b: LoanBooking) => insertOne("loan_bookings", 
 
 // Loan Repayments — upsert by (loanBookingId, period)
 export async function upsertLoanRepayment(payment: LoanRepayment) {
-  await supabase
+  await getSupabase()
     .from("loan_repayments")
     .delete()
     .match({ loan_booking_id: payment.loanBookingId, period: payment.period });
@@ -147,7 +147,7 @@ export const updateRD = (id: string, u: Partial<RecurringDeposit>) => updateById
 
 // RD Payments — upsert by (rdId, period)
 export async function upsertRDPayment(payment: RDPayment) {
-  await supabase
+  await getSupabase()
     .from("rd_payments")
     .delete()
     .match({ rd_id: payment.rdId, period: payment.period });
@@ -165,7 +165,7 @@ export const insertCustomerAccount = (a: CustomerAccount) => insertOne("customer
 
 // Master Lists (single-row table, id=1)
 export async function fetchMasterLists(): Promise<MasterLists | null> {
-  const { data, error } = await supabase.from("master_lists").select("*").eq("id", 1).single();
+  const { data, error } = await getSupabase().from("master_lists").select("*").eq("id", 1).single();
   if (error || !data) return null;
   const camelData = toCamel<Record<string, unknown>>(data);
   // Remove the 'id' column — not part of MasterLists
@@ -175,15 +175,15 @@ export async function fetchMasterLists(): Promise<MasterLists | null> {
 
 export async function upsertMasterLists(lists: MasterLists) {
   const row = { id: 1, ...toSnake(asRecord(lists)) };
-  const { error } = await supabase.from("master_lists").upsert(row);
+  const { error } = await getSupabase().from("master_lists").upsert(row);
   if (error) console.error("[supabase] upsert master_lists:", error.message);
 }
 
 // Tickets (replies in separate table)
 export async function fetchTickets(): Promise<Ticket[]> {
   const [ticketRes, replyRes] = await Promise.all([
-    supabase.from("tickets").select("*"),
-    supabase.from("ticket_replies").select("*"),
+    getSupabase().from("tickets").select("*"),
+    getSupabase().from("ticket_replies").select("*"),
   ]);
   if (ticketRes.error) {
     console.error("[supabase] fetch tickets:", ticketRes.error.message);
@@ -229,7 +229,7 @@ const DEFAULT_MASTER_LISTS: MasterLists = {
 // ─── SEED + LOAD ALL ─────────────────────────────
 
 async function seedIfEmpty(): Promise<boolean> {
-  const { count } = await supabase
+  const { count } = await getSupabase()
     .from("schemes")
     .select("*", { count: "exact", head: true });
   if (count && count > 0) return false;
