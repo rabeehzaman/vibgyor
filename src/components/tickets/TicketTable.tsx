@@ -3,6 +3,7 @@
 import { Ticket } from "@/lib/types";
 import { TICKET_TYPE_LABELS } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,20 +15,6 @@ import {
 } from "@/components/ui/table";
 import { Eye } from "lucide-react";
 import { format } from "date-fns";
-
-const statusColors: Record<string, string> = {
-  Open: "bg-blue-100 text-blue-700 hover:bg-blue-100",
-  "In Progress": "bg-yellow-100 text-yellow-700 hover:bg-yellow-100",
-  Resolved: "bg-green-100 text-green-700 hover:bg-green-100",
-  Closed: "bg-gray-100 text-gray-700 hover:bg-gray-100",
-};
-
-const priorityColors: Record<string, string> = {
-  Low: "bg-slate-100 text-slate-600 hover:bg-slate-100",
-  Medium: "bg-blue-100 text-blue-600 hover:bg-blue-100",
-  High: "bg-orange-100 text-orange-600 hover:bg-orange-100",
-  Urgent: "bg-red-100 text-red-600 hover:bg-red-100",
-};
 
 interface TicketTableProps {
   tickets: Ticket[];
@@ -71,13 +58,13 @@ export function TicketTable({ tickets, onSelect }: TicketTableProps) {
               <TableCell className="hidden md:table-cell">{ticket.customerName}</TableCell>
               <TableCell className="hidden lg:table-cell font-mono text-xs">{ticket.accountNumber}</TableCell>
               <TableCell>
-                <Badge className={`text-xs ${statusColors[ticket.status]}`}>{ticket.status}</Badge>
+                <StatusBadge status={ticket.status} dot />
               </TableCell>
               <TableCell className="hidden sm:table-cell">
-                <Badge className={`text-xs ${priorityColors[ticket.priority]}`}>{ticket.priority}</Badge>
+                <PriorityBadge priority={ticket.priority} />
               </TableCell>
               <TableCell className="hidden lg:table-cell text-sm">
-                {ticket.assignedToName || <span className="text-muted-foreground">—</span>}
+                {ticket.assignedToName || <span className="text-muted-foreground">&mdash;</span>}
               </TableCell>
               <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                 {format(new Date(ticket.createdAt), "dd MMM, hh:mm a")}

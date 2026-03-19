@@ -12,9 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/dashboard/KPICard";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { Users, Landmark, PiggyBank, MessageSquareText } from "lucide-react";
 
 export default function DashboardPage() {
-  const { selectedDate, selectedDateEnd, dailyReports } = useApp();
+  const { selectedDate, selectedDateEnd, dailyReports, tickets, isLoading } = useApp();
 
   const rows = useMemo(
     () => dailyReports.filter((r) => r.date >= selectedDate && r.date <= selectedDateEnd),
@@ -51,19 +54,69 @@ export default function DashboardPage() {
     return t;
   }, [rows]);
 
+  const kpis = useMemo(() => {
+    const openTickets = tickets.filter((t) => t.status === "Open" || t.status === "In Progress").length;
+    return {
+      memberships: totals.membershipNew + totals.membershipRenew,
+      fdRd: totals.fdNew + totals.fdRenew + totals.rdNew + totals.rdRenew + totals.rdCountFresh,
+      loans: totals.loanRdWithMb + totals.loanFdWithMb + totals.loanLoan,
+      openTickets,
+    };
+  }, [totals, tickets]);
+
   const displayDate = selectedDate === selectedDateEnd
     ? format(parseISO(selectedDate), "dd MMM yyyy")
     : `${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`;
 
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="space-y-6">
+      {/* Gradient hero summary */}
+      <div className="animate-fade-in relative overflow-hidden rounded-xl bg-gradient-to-br from-[oklch(0.40_0.22_265)] to-[oklch(0.50_0.20_290)] p-6 text-white shadow-lg">
+        <div className="relative z-10">
           <h2 className="text-xl sm:text-2xl font-bold">Daily Report</h2>
-          <p className="text-sm text-muted-foreground">{displayDate}</p>
+          <p className="mt-1 text-white/70 text-sm">{displayDate}</p>
+          <p className="mt-3 text-white/90 text-sm">
+            {rows.length} staff {rows.length === 1 ? "entry" : "entries"} recorded
+          </p>
         </div>
+        {/* Decorative circles */}
+        <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10" />
+        <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-white/5" />
       </div>
 
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 stagger-children">
+        <KPICard
+          label="Memberships"
+          value={kpis.memberships}
+          icon={Users}
+          iconColor="bg-blue-100 text-blue-600"
+        />
+        <KPICard
+          label="FD / RD"
+          value={kpis.fdRd}
+          icon={PiggyBank}
+          iconColor="bg-purple-100 text-purple-600"
+        />
+        <KPICard
+          label="Loan Bookings"
+          value={kpis.loans}
+          icon={Landmark}
+          iconColor="bg-amber-100 text-amber-600"
+        />
+        <KPICard
+          label="Open Tickets"
+          value={kpis.openTickets}
+          icon={MessageSquareText}
+          iconColor="bg-rose-100 text-rose-600"
+        />
+      </div>
+
+      {/* Staff Performance Table */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Staff Performance Summary</CardTitle>
@@ -119,35 +172,35 @@ export default function DashboardPage() {
                   <>
                     {rows.map((r, idx) => (
                       <TableRow key={`${r.staffId}-${r.date}`} className="hover:bg-muted/50">
-                        <TableCell className="border-r text-center text-muted-foreground">{idx + 1}</TableCell>
+                        <TableCell className="border-r text-center text-muted-foreground tabular-nums">{idx + 1}</TableCell>
                         <TableCell className="border-r font-medium">{r.staffName}</TableCell>
-                        <TableCell className="border-r text-center">{r.membershipNew || "-"}</TableCell>
-                        <TableCell className="border-r text-center">{r.membershipRenew || "-"}</TableCell>
-                        <TableCell className="border-r text-center">{r.bank || "-"}</TableCell>
-                        <TableCell className="border-r text-center">{r.fdNew || "-"}</TableCell>
-                        <TableCell className="border-r text-center">{r.fdRenew || "-"}</TableCell>
-                        <TableCell className="border-r text-center">{r.rdCountFresh || "-"}</TableCell>
-                        <TableCell className="border-r text-center">{r.rdNew || "-"}</TableCell>
-                        <TableCell className="border-r text-center">{r.rdRenew || "-"}</TableCell>
-                        <TableCell className="text-center">{r.loanRdWithMb || "-"}</TableCell>
-                        <TableCell className="text-center">{r.loanFdWithMb || "-"}</TableCell>
-                        <TableCell className="text-center">{r.loanLoan || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.membershipNew || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.membershipRenew || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.bank || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.fdNew || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.fdRenew || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.rdCountFresh || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.rdNew || "-"}</TableCell>
+                        <TableCell className="border-r text-center tabular-nums">{r.rdRenew || "-"}</TableCell>
+                        <TableCell className="text-center tabular-nums">{r.loanRdWithMb || "-"}</TableCell>
+                        <TableCell className="text-center tabular-nums">{r.loanFdWithMb || "-"}</TableCell>
+                        <TableCell className="text-center tabular-nums">{r.loanLoan || "-"}</TableCell>
                       </TableRow>
                     ))}
                     <TableRow className="bg-primary/10 font-bold border-t-2">
                       <TableCell className="border-r text-center" />
                       <TableCell className="border-r">TOTAL</TableCell>
-                      <TableCell className="border-r text-center">{totals.membershipNew}</TableCell>
-                      <TableCell className="border-r text-center">{totals.membershipRenew}</TableCell>
-                      <TableCell className="border-r text-center">{totals.bank}</TableCell>
-                      <TableCell className="border-r text-center">{totals.fdNew}</TableCell>
-                      <TableCell className="border-r text-center">{totals.fdRenew}</TableCell>
-                      <TableCell className="border-r text-center">{totals.rdCountFresh}</TableCell>
-                      <TableCell className="border-r text-center">{totals.rdNew}</TableCell>
-                      <TableCell className="border-r text-center">{totals.rdRenew}</TableCell>
-                      <TableCell className="text-center">{totals.loanRdWithMb}</TableCell>
-                      <TableCell className="text-center">{totals.loanFdWithMb}</TableCell>
-                      <TableCell className="text-center">{totals.loanLoan}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.membershipNew}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.membershipRenew}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.bank}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.fdNew}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.fdRenew}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.rdCountFresh}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.rdNew}</TableCell>
+                      <TableCell className="border-r text-center tabular-nums">{totals.rdRenew}</TableCell>
+                      <TableCell className="text-center tabular-nums">{totals.loanRdWithMb}</TableCell>
+                      <TableCell className="text-center tabular-nums">{totals.loanFdWithMb}</TableCell>
+                      <TableCell className="text-center tabular-nums">{totals.loanLoan}</TableCell>
                     </TableRow>
                   </>
                 )}

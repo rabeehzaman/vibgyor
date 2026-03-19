@@ -26,7 +26,7 @@ export function TicketStats({ tickets }: TicketStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 stagger-children">
       {stats.map((s) => (
         <Card key={s.label}>
           <CardContent className="flex items-center gap-3 p-4">

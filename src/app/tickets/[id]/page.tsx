@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { TICKET_TYPE_LABELS, TICKET_TYPE_DEPARTMENT, STAFF_MEMBERS } from "@/lib/constants";
 import { TicketStatus } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,21 +17,7 @@ import {
 } from "@/components/ui/select";
 import { TicketReplyForm } from "@/components/tickets/TicketReplyForm";
 import { format } from "date-fns";
-import { ArrowLeft, User, Phone, CreditCard, Clock, Tag, AlertTriangle } from "lucide-react";
-
-const statusColors: Record<string, string> = {
-  Open: "bg-blue-100 text-blue-700",
-  "In Progress": "bg-yellow-100 text-yellow-700",
-  Resolved: "bg-green-100 text-green-700",
-  Closed: "bg-gray-100 text-gray-700",
-};
-
-const priorityColors: Record<string, string> = {
-  Low: "bg-slate-100 text-slate-600",
-  Medium: "bg-blue-100 text-blue-600",
-  High: "bg-orange-100 text-orange-600",
-  Urgent: "bg-red-100 text-red-600",
-};
+import { ArrowLeft, User, Phone, CreditCard, Clock } from "lucide-react";
 
 export default function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -84,8 +70,8 @@ export default function TicketDetailPage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl font-bold font-mono">{ticket.referenceNumber}</h1>
-            <Badge className={statusColors[ticket.status]}>{ticket.status}</Badge>
-            <Badge className={priorityColors[ticket.priority]}>{ticket.priority}</Badge>
+            <StatusBadge status={ticket.status} dot />
+            <PriorityBadge priority={ticket.priority} dot />
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">
             {TICKET_TYPE_LABELS[ticket.type]} &middot; Created {format(new Date(ticket.createdAt), "dd MMM yyyy, hh:mm a")}

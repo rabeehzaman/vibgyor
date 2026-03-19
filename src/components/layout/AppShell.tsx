@@ -1,16 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { CustomerHeader } from "@/components/customer/CustomerHeader";
 import { AppProvider } from "@/context/AppContext";
+import { cn } from "@/lib/utils";
+
+const COLLAPSED_KEY = "vibgyor-sidebar-collapsed";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const isCustomerRoute = pathname.startsWith("/customer");
+
+  useEffect(() => {
+    const stored = localStorage.getItem(COLLAPSED_KEY);
+    if (stored === "true") setCollapsed(true);
+  }, []);
+
+  const handleToggleCollapse = () => {
+    setCollapsed((prev) => {
+      localStorage.setItem(COLLAPSED_KEY, String(!prev));
+      return !prev;
+    });
+  };
 
   return (
     <AppProvider>
@@ -21,8 +37,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : (
         <div className="flex h-screen overflow-hidden bg-background">
-          <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <div className="flex flex-1 flex-col overflow-hidden">
+          <Sidebar
+            open={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            collapsed={collapsed}
+            onToggleCollapse={handleToggleCollapse}
+          />
+          <div
+            className={cn(
+              "flex flex-1 flex-col overflow-hidden transition-all duration-300"
+            )}
+          >
             <Header onMenuClick={() => setSidebarOpen(true)} />
             <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
           </div>

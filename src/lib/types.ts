@@ -198,6 +198,57 @@ export interface DailyCashierState {
   status: "draft" | "reconciled" | "closed";
 }
 
+// ─── BANK BOOK (Accountant) ─────────────────
+export interface BankAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branch?: string;
+}
+
+export type PendingItemStatus = "pending" | "verified" | "suspense";
+
+export interface BankBookTransaction {
+  id: string;
+  date: string;
+  type: "receipt" | "payment";
+  amount: number;
+  description?: string;
+  timestamp: string;
+}
+
+export interface PendingItem {
+  id: string;
+  date: string;
+  amount: number;
+  narration: string;
+  status: PendingItemStatus;
+  verifiedDate?: string;
+  suspenseDate?: string;
+  timestamp: string;
+}
+
+export interface BankBookRecord {
+  id: string;
+  date: string;
+  openingBalance: number;
+  transactions: BankBookTransaction[];
+  totalReceipts: number;
+  totalPayments: number;
+  closingBalance: number;
+  settlementBalance?: number;
+}
+
+export interface DailyBankBookState {
+  id: string;
+  date: string;
+  bankAccountId: string;
+  bankBook: BankBookRecord;
+  pendingItems: PendingItem[];
+  status: "draft" | "reconciled" | "closed";
+}
+
 export type TransferStatus = "Pending" | "Processed" | "Done";
 
 export interface FundTransfer {

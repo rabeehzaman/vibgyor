@@ -7,18 +7,11 @@ import { TICKET_TYPE_LABELS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Send, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
-
-const statusColors: Record<string, string> = {
-  Open: "bg-blue-100 text-blue-700",
-  "In Progress": "bg-yellow-100 text-yellow-700",
-  Resolved: "bg-green-100 text-green-700",
-  Closed: "bg-gray-100 text-gray-700",
-};
 
 export default function TrackPage() {
   const { getTicketByReference, addTicketReply, tickets } = useApp();
@@ -95,7 +88,7 @@ export default function TrackPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-mono">{liveTicket.referenceNumber}</CardTitle>
-                <Badge className={statusColors[liveTicket.status]}>{liveTicket.status}</Badge>
+                <StatusBadge status={liveTicket.status} dot />
               </div>
             </CardHeader>
             <CardContent className="space-y-3">

@@ -206,6 +206,26 @@ create table if not exists master_lists (
   loan_scheme_codes jsonb not null default '[]'
 );
 
+-- Bank Accounts (nationalized banks where VIBGYOR holds accounts)
+create table if not exists bank_accounts (
+  id text primary key,
+  bank_name text not null,
+  account_number text not null,
+  ifsc_code text not null,
+  branch text
+);
+
+-- Daily Bank Book States — one row per (date, bank_account) pair
+create table if not exists daily_bank_book_states (
+  id text primary key,
+  date text not null,
+  bank_account_id text not null references bank_accounts(id),
+  bank_book jsonb not null,
+  pending_items jsonb not null default '[]',
+  status text not null default 'draft',
+  unique(date, bank_account_id)
+);
+
 -- Tickets
 create table if not exists tickets (
   id text primary key,

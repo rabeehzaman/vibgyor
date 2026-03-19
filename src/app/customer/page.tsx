@@ -80,14 +80,21 @@ export default function CustomerPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold md:text-3xl">Welcome to VIBGYOR Bank</h1>
-        <p className="mt-2 text-muted-foreground">
-          How can we help you today? Select a service to get started.
-        </p>
+      {/* Gradient hero section */}
+      <div className="animate-fade-in relative mb-8 overflow-hidden rounded-xl bg-gradient-to-br from-[oklch(0.40_0.22_265)] to-[oklch(0.50_0.20_290)] p-8 text-center text-white shadow-lg">
+        <div className="relative z-10">
+          <h1 className="text-2xl font-bold md:text-3xl">Welcome to VIBGYOR Bank</h1>
+          <p className="mt-2 text-white/80">
+            How can we help you today? Select a service to get started.
+          </p>
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute -top-8 -left-8 h-32 w-32 rounded-full bg-white/10" />
+        <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-white/5" />
+        <div className="absolute top-1/2 right-1/4 h-16 w-16 rounded-full bg-white/5" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 stagger-children">
         {services.map((svc) => (
           <ServiceCard
             key={svc.type}

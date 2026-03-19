@@ -30,6 +30,8 @@ import {
   Ticket,
   TicketReply,
   TicketStatus,
+  BankAccount,
+  DailyBankBookState,
 } from "@/lib/types";
 import {
   recalcDayBook,
@@ -102,6 +104,13 @@ interface AppState {
   assignTicket: (id: string, staffId: string, staffName: string) => void;
   addTicketReply: (ticketId: string, reply: TicketReply) => void;
   getTicketByReference: (ref: string) => Ticket | undefined;
+  // Bank Book
+  bankAccounts: BankAccount[];
+  addBankAccount: (account: BankAccount) => void;
+  updateBankAccount: (id: string, updates: Partial<BankAccount>) => void;
+  removeBankAccount: (id: string) => void;
+  dailyBankBookStates: DailyBankBookState[];
+  saveDailyBankBookState: (state: DailyBankBookState) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -145,6 +154,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [customerAccounts, setCustomerAccounts] = useState<CustomerAccount[]>([]);
   const [masterLists, setMasterLists] = useState<MasterLists>(DEFAULT_MASTER_LISTS);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [dailyBankBookStates, setDailyBankBookStates] = useState<DailyBankBookState[]>([]);
 
   // ─── Load all data from Supabase on mount ─────
   useEffect(() => {
@@ -167,6 +178,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setCustomerAccounts(data.customerAccounts);
         setMasterLists(data.masterLists);
         setTickets(data.tickets);
+        setBankAccounts(data.bankAccounts);
+        setDailyBankBookStates(data.dailyBankBookStates);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -425,6 +438,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // ─── Bank Book Actions ────────────────────────
+  const addBankAccount = useCallback((account: BankAccount) => {
+    setBankAccounts((prev) => [...prev, account]);
+    db.insertBankAccount(account);
+  }, []);
+
+  const updateBankAccountFn = useCallback((id: string, updates: Partial<BankAccount>) => {
+    setBankAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
+    db.updateBankAccount(id, updates);
+  }, []);
+
+  const removeBankAccount = useCallback((id: string) => {
+    setBankAccounts((prev) => prev.filter((a) => a.id !== id));
+    db.deleteBankAccount(id);
+  }, []);
+
+  const saveDailyBankBookState = useCallback((state: DailyBankBookState) => {
+    setDailyBankBookStates((prev) => {
+      const idx = prev.findIndex((s) => s.date === state.date && s.bankAccountId === state.bankAccountId);
+      if (idx >= 0) { const next = [...prev]; next[idx] = state; return next; }
+      return [...prev, state];
+    });
+    db.upsertDailyBankBookState(state);
+  }, []);
+
   // ─── Auto-refresh tickets every 15s ────────────
   useEffect(() => {
     if (isLoading) return;
@@ -527,6 +565,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         customerAccounts, addCustomerAccount,
         masterLists, addToMasterList,
         tickets, addTicket, updateTicketStatus, assignTicket, addTicketReply, getTicketByReference,
+        bankAccounts, addBankAccount, updateBankAccount: updateBankAccountFn, removeBankAccount,
+        dailyBankBookStates, saveDailyBankBookState,
       }}
     >
       {isLoading ? (

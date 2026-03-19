@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { Menu, CalendarDays, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { Menu, CalendarDays, Calendar as CalendarIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,10 +20,21 @@ const PRESETS: { key: Exclude<DatePreset, "custom">; label: string }[] = [
   { key: "this-month", label: "This Month" },
 ];
 
+const ROUTE_TITLES: Record<string, { title: string; parent?: string }> = {
+  "/": { title: "Dashboard" },
+  "/cre": { title: "CRE", parent: "Customer Relations" },
+  "/lpo": { title: "LPO", parent: "Loan Processing" },
+  "/abm": { title: "ABM", parent: "Marketing" },
+  "/cashier": { title: "Cashier", parent: "Cash Management" },
+  "/accountant": { title: "Accountant", parent: "Fund Transfers" },
+  "/tickets": { title: "Tickets", parent: "Customer Requests" },
+};
+
 export function Header({ onMenuClick }: HeaderProps) {
   const { datePreset, selectedDate, setDatePreset, setCustomDate } = useApp();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
 
   const activeLabel = datePreset === "custom"
     ? format(parseISO(selectedDate), "MMM dd, yyyy")
@@ -38,6 +50,12 @@ export function Header({ onMenuClick }: HeaderProps) {
     }
   };
 
+  // Find route info for breadcrumbs
+  const routeKey = Object.keys(ROUTE_TITLES).find(
+    (key) => key === "/" ? pathname === "/" : pathname === key || pathname.startsWith(key + "/")
+  );
+  const routeInfo = routeKey ? ROUTE_TITLES[routeKey] : null;
+
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card/95 backdrop-blur px-4 gap-3 sticky top-0 z-40">
       <div className="flex items-center gap-3 shrink-0">
@@ -49,9 +67,24 @@ export function Header({ onMenuClick }: HeaderProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <h1 className="text-lg font-semibold text-foreground hidden sm:block">
-          Bank Operations Management
-        </h1>
+        <div className="hidden sm:block">
+          {routeInfo ? (
+            <div>
+              <h1 className="text-lg font-semibold text-foreground leading-tight">{routeInfo.title}</h1>
+              {routeInfo.parent && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>Operations</span>
+                  <ChevronRight className="h-3 w-3" />
+                  <span>{routeInfo.parent}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <h1 className="text-lg font-semibold text-foreground">
+              Bank Operations Management
+            </h1>
+          )}
+        </div>
       </div>
 
       <div className="flex justify-end items-center gap-2">

@@ -24,9 +24,9 @@ import { Plus, FileText, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight 
 import { ToastNotification, useToast } from "@/components/ui/toast-notification";
 
 const statusColor: Record<LoanStatus, string> = {
-  "Under Process": "bg-yellow-100 text-yellow-800 border-yellow-300",
-  Passed: "bg-green-100 text-green-800 border-green-300",
-  Rejected: "bg-red-100 text-red-800 border-red-300",
+  "Under Process": "bg-yellow-100 text-yellow-700 border-yellow-200",
+  Passed: "bg-green-100 text-green-700 border-green-200",
+  Rejected: "bg-red-100 text-red-700 border-red-200",
 };
 
 export default function LPOPage() {
