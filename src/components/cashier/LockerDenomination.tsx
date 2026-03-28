@@ -13,12 +13,13 @@ import { calcLockerBundleTotal, calcLockerClosing } from "@/lib/cashier-utils";
 interface LockerDenominationProps {
     state: DailyCashierState;
     onUpdate: (state: DailyCashierState) => void;
+    readOnly?: boolean;
 }
 
 const INR = (n: number) =>
     n.toLocaleString("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 0 });
 
-export default function LockerDenomination({ state, onUpdate }: LockerDenominationProps) {
+export default function LockerDenomination({ state, onUpdate, readOnly }: LockerDenominationProps) {
     const locker = state.locker;
 
     const getCount = (arr: DenominationCount[], denom: number) =>
@@ -179,6 +180,7 @@ export default function LockerDenomination({ state, onUpdate }: LockerDenominati
                                                     onFocus={(e) => e.target.select()}
                                                     className="w-20 h-7 text-center text-xs mx-auto"
                                                     placeholder="0"
+                                                    disabled={readOnly}
                                                 />
                                             </TableCell>
                                             <TableCell className="bg-green-50/30">
@@ -190,6 +192,7 @@ export default function LockerDenomination({ state, onUpdate }: LockerDenominati
                                                     onFocus={(e) => e.target.select()}
                                                     className="w-20 h-7 text-center text-xs mx-auto"
                                                     placeholder="0"
+                                                    disabled={readOnly}
                                                 />
                                             </TableCell>
                                             <TableCell className="bg-red-50/30">
@@ -201,6 +204,7 @@ export default function LockerDenomination({ state, onUpdate }: LockerDenominati
                                                     onFocus={(e) => e.target.select()}
                                                     className="w-20 h-7 text-center text-xs mx-auto"
                                                     placeholder="0"
+                                                    disabled={readOnly}
                                                 />
                                             </TableCell>
                                             <TableCell className="text-center font-semibold bg-violet-50/30">

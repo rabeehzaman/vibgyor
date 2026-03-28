@@ -15,12 +15,13 @@ import { detectBundleable, executeBundling, calcNoteTotal, calcCoinTotal, calcLo
 interface LooseDenominationProps {
     state: DailyCashierState;
     onUpdate: (state: DailyCashierState) => void;
+    readOnly?: boolean;
 }
 
 const INR = (n: number) =>
     n.toLocaleString("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 0 });
 
-export default function LooseDenomination({ state, onUpdate }: LooseDenominationProps) {
+export default function LooseDenomination({ state, onUpdate, readOnly }: LooseDenominationProps) {
     const loose = state.loose;
 
     const notesTotal = useMemo(() => calcNoteTotal(loose.noteDenominations), [loose.noteDenominations]);
@@ -129,7 +130,7 @@ export default function LooseDenomination({ state, onUpdate }: LooseDenomination
             </div>
 
             {/* Bundle Alert */}
-            {bundleAlerts.length > 0 && (
+            {!readOnly && bundleAlerts.length > 0 && (
                 <Card className="border-amber-300 bg-amber-50/50">
                     <CardContent className="py-3 px-4">
                         <div className="flex items-start gap-3">
@@ -198,6 +199,7 @@ export default function LooseDenomination({ state, onUpdate }: LooseDenomination
                                                             onFocus={(e) => e.target.select()}
                                                             className={`w-24 h-7 text-xs ${overBundle ? "border-amber-400 ring-amber-200" : ""}`}
                                                             placeholder="0"
+                                                            disabled={readOnly}
                                                         />
                                                         {overBundle && (
                                                             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
@@ -254,6 +256,7 @@ export default function LooseDenomination({ state, onUpdate }: LooseDenomination
                                                     onFocus={(e) => e.target.select()}
                                                     className="w-24 h-7 text-xs"
                                                     placeholder="0"
+                                                    disabled={readOnly}
                                                 />
                                             </TableCell>
                                             <TableCell className="text-right font-mono text-sm">

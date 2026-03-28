@@ -17,12 +17,13 @@ import { recalcDayBook } from "@/lib/cashier-utils";
 interface DayBookProps {
     state: DailyCashierState;
     onUpdate: (state: DailyCashierState) => void;
+    readOnly?: boolean;
 }
 
 const INR = (n: number) =>
     n.toLocaleString("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 0 });
 
-export default function DayBook({ state, onUpdate }: DayBookProps) {
+export default function DayBook({ state, onUpdate, readOnly }: DayBookProps) {
     const [txnType, setTxnType] = useState<"receipt" | "payment">("receipt");
     const [txnAmount, setTxnAmount] = useState("");
     const [txnDesc, setTxnDesc] = useState("");
@@ -118,6 +119,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                             onFocus={(e) => e.target.select()}
                             className="text-lg font-bold h-9"
                             placeholder="0"
+                            disabled={readOnly}
                         />
                     </CardContent>
                 </Card>
@@ -156,6 +158,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
             </div>
 
             {/* Transaction Entry Form */}
+            {!readOnly && (
             <Card>
                 <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -214,6 +217,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                     </div>
                 </CardContent>
             </Card>
+            )}
 
             {/* Transaction Ledger — Traditional Daybook Format */}
             <Card>
@@ -304,6 +308,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                                                     {new Date(txn.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                                                 </TableCell>
                                                 <TableCell>
+                                                    {!readOnly && (
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
@@ -312,6 +317,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5" />
                                                     </Button>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -368,6 +374,7 @@ export default function DayBook({ state, onUpdate }: DayBookProps) {
                                 onFocus={(e) => e.target.select()}
                                 placeholder="System closing balance"
                                 className="h-9"
+                                disabled={readOnly}
                             />
                         </div>
                         {dayBook.systemClosingBalance !== undefined && dayBook.systemClosingBalance > 0 && (

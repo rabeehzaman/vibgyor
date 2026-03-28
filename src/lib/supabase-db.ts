@@ -20,6 +20,7 @@ import {
   TicketReply,
   BankAccount,
   DailyBankBookState,
+  ProfitReport,
 } from "./types";
 import { customerVisits as seedVisits } from "@/data/customer-visits";
 import { loanEnquiries as seedLoans } from "@/data/loan-enquiries";
@@ -136,6 +137,10 @@ export const upsertCashierRecord = (r: CashierRecord) => upsertOne("cashier_reco
 
 // Daily Cashier States
 export const upsertDailyCashierState = (s: DailyCashierState) => upsertOne("daily_cashier_states", s);
+export async function deleteDailyCashierState(id: string) {
+  const { error } = await getSupabase().from("daily_cashier_states").delete().eq("id", id);
+  if (error) console.error("[supabase] delete daily_cashier_states:", error.message);
+}
 
 // CRE Entries
 export const insertCREEntry = (e: CREDailyEntry) => insertOne("cre_entries", e);
@@ -225,6 +230,9 @@ export async function deleteBankAccount(id: string) {
 // Daily Bank Book States
 export const upsertDailyBankBookState = (s: DailyBankBookState) => upsertOne("daily_bank_book_states", s);
 
+// Profit Reports
+export const upsertProfitReport = (r: ProfitReport) => upsertOne("profit_reports", r);
+
 // ─── DEFAULT MASTER LISTS ────────────────────────
 
 const DEFAULT_MASTER_LISTS: MasterLists = {
@@ -285,6 +293,7 @@ export async function loadAllData() {
     tickets,
     bankAccounts,
     dailyBankBookStates,
+    profitReports,
   ] = await Promise.all([
     fetchAll<CustomerVisit>("customer_visits"),
     fetchAll<LoanEnquiry>("loan_enquiries"),
@@ -305,6 +314,7 @@ export async function loadAllData() {
     fetchTickets(),
     fetchAll<BankAccount>("bank_accounts"),
     fetchAll<DailyBankBookState>("daily_bank_book_states"),
+    fetchAll<ProfitReport>("profit_reports"),
   ]);
 
   return {
@@ -327,5 +337,6 @@ export async function loadAllData() {
     tickets,
     bankAccounts,
     dailyBankBookStates,
+    profitReports,
   };
 }

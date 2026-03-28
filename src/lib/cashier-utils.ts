@@ -13,6 +13,7 @@ import type {
     ReconciliationRecord,
     DailyCashierState,
     CashTransaction,
+    OpeningBalanceSource,
 } from "./types";
 
 // ─── DENOMINATION HELPERS ────────────────────
@@ -232,7 +233,8 @@ export function computeReconciliation(
 export function createEmptyDailyCashierState(
     date: string,
     previousClosingBalance: number = 0,
-    previousLockerClosing?: DenominationCount[]
+    previousLockerClosing?: DenominationCount[],
+    openingBalanceSource?: OpeningBalanceSource
 ): DailyCashierState {
     const lockerOpening = previousLockerClosing || emptyDenominations();
 
@@ -286,5 +288,9 @@ export function createEmptyDailyCashierState(
         },
         staffAdvances: [],
         status: "draft",
+        openingBalanceSource: openingBalanceSource ?? {
+            type: previousClosingBalance > 0 ? "carry-forward" : "manual-override",
+            amount: previousClosingBalance,
+        },
     };
 }

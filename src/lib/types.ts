@@ -187,6 +187,12 @@ export interface StaffAdvance {
   remarks?: string;
 }
 
+export interface OpeningBalanceSource {
+  type: "carry-forward" | "manual-override";
+  fromDate?: string;
+  amount: number;
+}
+
 export interface DailyCashierState {
   id: string;
   date: string;
@@ -196,6 +202,10 @@ export interface DailyCashierState {
   reconciliation: ReconciliationRecord;
   staffAdvances: StaffAdvance[];
   status: "draft" | "reconciled" | "closed";
+  closedAt?: string;
+  closedBy?: string;
+  reopenedAt?: string;
+  openingBalanceSource?: OpeningBalanceSource;
 }
 
 // ─── BANK BOOK (Accountant) ─────────────────
@@ -377,6 +387,42 @@ export interface MasterLists {
   customerNeeds: string[];
   fdTypes: string[];
   loanSchemeCodes: string[];
+}
+
+// ─── NET PROFIT CALCULATOR (Accountant) ─────
+export type ProfitPeriodType = "monthly" | "quarterly" | "yearly";
+
+export interface IncomeBreakdown {
+  interestEarned: number;
+  serviceFees: number;
+  loanIncome: number;
+  investmentIncome: number;
+  otherIncome: number;
+}
+
+export interface ExpenseBreakdown {
+  salariesWages: number;
+  rentUtilities: number;
+  interestPaid: number;
+  operationalCosts: number;
+  marketing: number;
+  depreciation: number;
+  otherExpenses: number;
+}
+
+export interface ProfitReport {
+  id: string;
+  period: string;
+  periodType: ProfitPeriodType;
+  incomeBreakdown: IncomeBreakdown;
+  expenseBreakdown: ExpenseBreakdown;
+  totalIncome: number;
+  totalExpenses: number;
+  netProfit: number;
+  targetProfit?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── TICKET SYSTEM ──────────────────────────

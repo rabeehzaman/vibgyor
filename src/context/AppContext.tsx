@@ -32,6 +32,7 @@ import {
   TicketStatus,
   BankAccount,
   DailyBankBookState,
+  ProfitReport,
 } from "@/lib/types";
 import {
   recalcDayBook,
@@ -80,6 +81,9 @@ interface AppState {
   removeStaffShortage: (date: string, shortageId: string) => void;
   addStaffAdvance: (date: string, advance: StaffAdvance) => void;
   removeStaffAdvance: (date: string, advanceId: string) => void;
+  closeCashierDay: (date: string, closedBy?: string) => void;
+  reopenCashierDay: (date: string) => void;
+  deleteCashierDay: (date: string) => void;
   creEntries: CREDailyEntry[];
   addCREEntry: (entry: CREDailyEntry) => void;
   customerMovements: CustomerMovement[];
@@ -111,6 +115,9 @@ interface AppState {
   removeBankAccount: (id: string) => void;
   dailyBankBookStates: DailyBankBookState[];
   saveDailyBankBookState: (state: DailyBankBookState) => void;
+  // Net Profit
+  profitReports: ProfitReport[];
+  saveProfitReport: (report: ProfitReport) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -156,6 +163,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [dailyBankBookStates, setDailyBankBookStates] = useState<DailyBankBookState[]>([]);
+  const [profitReports, setProfitReports] = useState<ProfitReport[]>([]);
 
   // ─── Load all data from Supabase on mount ─────
   useEffect(() => {
@@ -180,6 +188,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setTickets(data.tickets);
         setBankAccounts(data.bankAccounts);
         setDailyBankBookStates(data.dailyBankBookStates);
+        setProfitReports(data.profitReports);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -368,6 +377,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const closeCashierDay = useCallback((date: string, closedBy?: string) => {
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, status: "closed" as const, closedAt: new Date().toISOString(), closedBy: closedBy ?? "CASHIER" };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
+  }, []);
+
+  const reopenCashierDay = useCallback((date: string) => {
+    setDailyCashierStates((prev) => {
+      const next = prev.map((s) => {
+        if (s.date !== date) return s;
+        return { ...s, status: "draft" as const, reopenedAt: new Date().toISOString() };
+      });
+      const changed = next.find((s) => s.date === date);
+      if (changed) db.upsertDailyCashierState(changed);
+      return next;
+    });
+  }, []);
+
+  const deleteCashierDay = useCallback((date: string) => {
+    setDailyCashierStates((prev) => {
+      const target = prev.find((s) => s.date === date);
+      if (target) db.deleteDailyCashierState(target.id);
+      return prev.filter((s) => s.date !== date);
+    });
+  }, []);
+
   const addCREEntry = useCallback((entry: CREDailyEntry) => {
     setCREEntries((prev) => [...prev, entry]);
     db.insertCREEntry(entry);
@@ -463,6 +504,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     db.upsertDailyBankBookState(state);
   }, []);
 
+  const saveProfitReport = useCallback((report: ProfitReport) => {
+    setProfitReports((prev) => {
+      const idx = prev.findIndex((r) => r.period === report.period && r.periodType === report.periodType);
+      if (idx >= 0) { const next = [...prev]; next[idx] = report; return next; }
+      return [...prev, report];
+    });
+    db.upsertProfitReport(report);
+  }, []);
+
   // ─── Auto-refresh tickets every 15s ────────────
   useEffect(() => {
     if (isLoading) return;
@@ -555,7 +605,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addCashTransaction, removeCashTransaction,
         updateLockerRecord, updateLooseRecord,
         addStaffShortage, removeStaffShortage,
-        addStaffAdvance, removeStaffAdvance,
+        addStaffAdvance, removeStaffAdvance, closeCashierDay, reopenCashierDay, deleteCashierDay,
         creEntries, addCREEntry,
         customerMovements, addCustomerMovement,
         rdList, addRD, updateRDStatus,
@@ -567,6 +617,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         tickets, addTicket, updateTicketStatus, assignTicket, addTicketReply, getTicketByReference,
         bankAccounts, addBankAccount, updateBankAccount: updateBankAccountFn, removeBankAccount,
         dailyBankBookStates, saveDailyBankBookState,
+        profitReports, saveProfitReport,
       }}
     >
       {isLoading ? (

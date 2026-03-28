@@ -17,12 +17,13 @@ import { STAFF_MEMBERS, STAFF_ADVANCE_CATEGORIES } from "@/lib/constants";
 interface StaffAdvancesProps {
     state: DailyCashierState;
     onUpdate: (state: DailyCashierState) => void;
+    readOnly?: boolean;
 }
 
 const INR = (n: number) =>
     n.toLocaleString("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 0 });
 
-export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesProps) {
+export default function StaffAdvancesPanel({ state, onUpdate, readOnly }: StaffAdvancesProps) {
     // Shortage form state
     const [shortStaffId, setShortStaffId] = useState("");
     const [shortAmount, setShortAmount] = useState("");
@@ -121,6 +122,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                 </CardHeader>
                 <CardContent className="px-4 pb-3">
                     {/* Add Shortage Form */}
+                    {!readOnly && (
                     <div className="flex flex-wrap items-end gap-2 mb-3 pb-3 border-b">
                         <div className="w-full sm:w-auto sm:min-w-[140px]">
                             <label className="text-xs text-muted-foreground mb-1 block">Staff Member</label>
@@ -161,6 +163,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                             <Plus className="h-3 w-3 mr-1" /> Add
                         </Button>
                     </div>
+                    )}
 
                     {/* Shortages Table */}
                     {shortages.length === 0 ? (
@@ -184,6 +187,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">{sh.reason || "—"}</TableCell>
                                         <TableCell>
+                                            {!readOnly && (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -192,6 +196,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -221,6 +226,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                 </CardHeader>
                 <CardContent className="px-4 pb-3">
                     {/* Add Advance Form */}
+                    {!readOnly && (
                     <div className="flex flex-wrap items-end gap-2 mb-3 pb-3 border-b">
                         <div className="w-full sm:w-auto sm:min-w-[140px]">
                             <label className="text-xs text-muted-foreground mb-1 block">Staff / Name</label>
@@ -276,6 +282,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                             <Plus className="h-3 w-3 mr-1" /> Add
                         </Button>
                     </div>
+                    )}
 
                     {/* Advances Table */}
                     {advances.length === 0 ? (
@@ -303,6 +310,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                                         <TableCell className="text-right font-mono text-sm font-bold">{INR(adv.amount)}</TableCell>
                                         <TableCell className="text-sm text-muted-foreground">{adv.remarks || "—"}</TableCell>
                                         <TableCell>
+                                            {!readOnly && (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -311,6 +319,7 @@ export default function StaffAdvancesPanel({ state, onUpdate }: StaffAdvancesPro
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}
