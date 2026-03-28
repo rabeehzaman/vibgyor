@@ -10,9 +10,10 @@ interface KPICardProps {
   icon: LucideIcon;
   iconColor?: string;
   className?: string;
+  formatFn?: (n: number) => string;
 }
 
-export function KPICard({ label, value, icon: Icon, iconColor = "bg-primary/10 text-primary", className }: KPICardProps) {
+export function KPICard({ label, value, icon: Icon, iconColor = "bg-primary/10 text-primary", className, formatFn }: KPICardProps) {
   return (
     <div
       className={cn(
@@ -26,7 +27,7 @@ export function KPICard({ label, value, icon: Icon, iconColor = "bg-primary/10 t
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-2xl font-bold">
-          <AnimatedNumber value={value} />
+          <AnimatedNumber value={value} formatFn={formatFn} />
         </p>
       </div>
     </div>

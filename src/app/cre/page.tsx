@@ -39,9 +39,11 @@ import {
 } from "@/components/ui/command";
 import {
   Plus, Users, TrendingUp, Repeat, FileText, Search, Settings, Check, ChevronsUpDown,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, ChevronDown, UserCheck, BarChart3, AlertCircle, Percent,
+  ListChecks, CircleDollarSign,
 } from "lucide-react";
 import { ToastNotification, useToast } from "@/components/ui/toast-notification";
+import { KPICard } from "@/components/dashboard/KPICard";
 
 function cn(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(" ");
@@ -848,78 +850,100 @@ function CategorySection({
 }) {
   const colorClass = CATEGORY_COLORS[category];
   const label = CATEGORY_LABELS[category];
+  const [open, setOpen] = useState(entries.length > 0);
+
+  // Auto-expand when entries appear
+  useEffect(() => {
+    if (entries.length > 0) setOpen(true);
+  }, [entries.length]);
 
   return (
-    <div className="mb-4">
-      <div className={`flex items-center justify-between px-3 py-2 rounded-t-md border ${colorClass}`}>
-        <span className="text-sm font-semibold">{label}</span>
-        <AddEntryDialog category={category} schemes={schemes} onAdd={onAdd} />
+    <Card className="mb-3 overflow-hidden">
+      <div className={`flex items-center justify-between px-3 py-2 border-b ${colorClass}`}>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 text-sm font-semibold"
+        >
+          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", open && "rotate-180")} />
+          {label}
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 rounded-full">
+            {entries.length}
+          </Badge>
+        </button>
+        <div onClick={(e) => e.stopPropagation()}>
+          <AddEntryDialog category={category} schemes={schemes} onAdd={onAdd} />
+        </div>
       </div>
-      <div className="border border-t-0 rounded-b-md overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="text-xs">
-              <TableHead className="w-10">#</TableHead>
-              <TableHead>Account No</TableHead>
-              <TableHead>Referred By</TableHead>
-              {category === "NewMembership" && <><TableHead>Plan</TableHead><TableHead>Product</TableHead></>}
-              {category === "NewDailyDeposit" && <><TableHead>DD Type</TableHead><TableHead>Area</TableHead></>}
-              {category === "NewRD" && <><TableHead>Amount</TableHead><TableHead>Tenure</TableHead><TableHead>Type</TableHead><TableHead>Scheme</TableHead><TableHead>Customer</TableHead><TableHead>Staff</TableHead></>}
-              {category === "NewFD" && <><TableHead>Amount</TableHead><TableHead>Tenure</TableHead><TableHead>Type</TableHead><TableHead>Bank/Cash</TableHead><TableHead>FD Type</TableHead><TableHead>Scheme</TableHead></>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-4 text-xs text-muted-foreground">
-                  No entries for this date
-                </TableCell>
+      {open && (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="text-xs">
+                <TableHead className="w-10">#</TableHead>
+                <TableHead>Account No</TableHead>
+                <TableHead>Referred By</TableHead>
+                {category === "NewMembership" && <><TableHead>Plan</TableHead><TableHead>Product</TableHead></>}
+                {category === "NewDailyDeposit" && <><TableHead>DD Type</TableHead><TableHead>Area</TableHead></>}
+                {category === "NewRD" && <><TableHead>Amount</TableHead><TableHead>Tenure</TableHead><TableHead>Type</TableHead><TableHead>Scheme</TableHead><TableHead>Customer</TableHead><TableHead>Staff</TableHead></>}
+                {category === "NewFD" && <><TableHead>Amount</TableHead><TableHead>Tenure</TableHead><TableHead>Type</TableHead><TableHead>Bank/Cash</TableHead><TableHead>FD Type</TableHead><TableHead>Scheme</TableHead></>}
               </TableRow>
-            ) : (
-              entries.map((e, i) => (
-                <TableRow key={e.id} className="text-sm">
-                  <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                  <TableCell className="font-mono text-xs">{e.accountNumber}</TableCell>
-                  <TableCell>{e.referredBy}</TableCell>
-                  {category === "NewMembership" && (
-                    <>
-                      <TableCell><Badge variant="outline">{e.plan}</Badge></TableCell>
-                      <TableCell>{e.product}</TableCell>
-                    </>
-                  )}
-                  {category === "NewDailyDeposit" && (
-                    <>
-                      <TableCell>{e.ddType}</TableCell>
-                      <TableCell className="text-xs">{e.collectionArea}</TableCell>
-                    </>
-                  )}
-                  {category === "NewRD" && (
-                    <>
-                      <TableCell className="font-mono">₹{e.amount?.toLocaleString("en-IN")}</TableCell>
-                      <TableCell className="text-xs">{e.tenure}</TableCell>
-                      <TableCell><Badge variant={e.freshRenewal === "Fresh" ? "default" : "secondary"}>{e.freshRenewal}</Badge></TableCell>
-                      <TableCell className="text-xs">{e.scheme}</TableCell>
-                      <TableCell className="text-xs">{e.customerName ?? "—"}</TableCell>
-                      <TableCell className="text-xs">{e.staffName ?? "—"}</TableCell>
-                    </>
-                  )}
-                  {category === "NewFD" && (
-                    <>
-                      <TableCell className="font-mono">₹{e.amount?.toLocaleString("en-IN")}</TableCell>
-                      <TableCell className="text-xs">{e.tenure}</TableCell>
-                      <TableCell><Badge variant={e.freshRenewal === "Fresh" ? "default" : "secondary"}>{e.freshRenewal}</Badge></TableCell>
-                      <TableCell>{e.bankCash}</TableCell>
-                      <TableCell>{e.fdType}</TableCell>
-                      <TableCell className="text-xs">{e.scheme}</TableCell>
-                    </>
-                  )}
+            </TableHeader>
+            <TableBody>
+              {entries.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-8">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+                    <p className="text-sm text-muted-foreground">No entries yet</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">Click + to add your first {label.toLowerCase()}</p>
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+              ) : (
+                entries.map((e, i) => (
+                  <TableRow key={e.id} className="text-sm">
+                    <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell className="font-mono text-xs">{e.accountNumber}</TableCell>
+                    <TableCell>{e.referredBy}</TableCell>
+                    {category === "NewMembership" && (
+                      <>
+                        <TableCell><Badge variant="outline">{e.plan}</Badge></TableCell>
+                        <TableCell>{e.product}</TableCell>
+                      </>
+                    )}
+                    {category === "NewDailyDeposit" && (
+                      <>
+                        <TableCell>{e.ddType}</TableCell>
+                        <TableCell className="text-xs">{e.collectionArea}</TableCell>
+                      </>
+                    )}
+                    {category === "NewRD" && (
+                      <>
+                        <TableCell className="font-mono">₹{e.amount?.toLocaleString("en-IN")}</TableCell>
+                        <TableCell className="text-xs">{e.tenure}</TableCell>
+                        <TableCell><Badge variant={e.freshRenewal === "Fresh" ? "default" : "secondary"}>{e.freshRenewal}</Badge></TableCell>
+                        <TableCell className="text-xs">{e.scheme}</TableCell>
+                        <TableCell className="text-xs">{e.customerName ?? "—"}</TableCell>
+                        <TableCell className="text-xs">{e.staffName ?? "—"}</TableCell>
+                      </>
+                    )}
+                    {category === "NewFD" && (
+                      <>
+                        <TableCell className="font-mono">₹{e.amount?.toLocaleString("en-IN")}</TableCell>
+                        <TableCell className="text-xs">{e.tenure}</TableCell>
+                        <TableCell><Badge variant={e.freshRenewal === "Fresh" ? "default" : "secondary"}>{e.freshRenewal}</Badge></TableCell>
+                        <TableCell>{e.bankCash}</TableCell>
+                        <TableCell>{e.fdType}</TableCell>
+                        <TableCell className="text-xs">{e.scheme}</TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -958,23 +982,11 @@ function DailyReportTab() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        {[
-          { label: "Total Entries", value: stats.total, icon: FileText, color: "" },
-          { label: "New Memberships", value: stats.memberships, icon: Users, color: "text-purple-600" },
-          { label: "New RDs", value: stats.rds, icon: TrendingUp, color: "text-green-600" },
-          { label: "New FDs", value: stats.fds, icon: Repeat, color: "text-yellow-600" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <Card key={label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{label}</CardTitle>
-              <Icon className={`h-4 w-4 text-muted-foreground ${color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${color}`}>{value}</div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 stagger-children">
+        <KPICard label="Total Entries" value={stats.total} icon={FileText} iconColor="bg-primary/10 text-primary" />
+        <KPICard label="New Memberships" value={stats.memberships} icon={Users} iconColor="bg-purple-100 text-purple-600" />
+        <KPICard label="New RDs" value={stats.rds} icon={TrendingUp} iconColor="bg-green-100 text-green-600" />
+        <KPICard label="New FDs" value={stats.fds} icon={Repeat} iconColor="bg-yellow-100 text-yellow-600" />
       </div>
 
       {CATEGORIES.map((cat) => (
@@ -1094,6 +1106,19 @@ function CustomerMovementTab() {
     [customerMovements, selectedDate, selectedDateEnd]
   );
 
+  const movementStats = useMemo(() => {
+    const needCounts = new Map<string, number>();
+    filtered.forEach((m) => needCounts.set(m.need, (needCounts.get(m.need) || 0) + 1));
+    const topNeedEntry = [...needCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    const uniqueStaff = new Set(filtered.map((m) => m.treatedBy)).size;
+    return {
+      total: filtered.length,
+      topNeed: topNeedEntry ? topNeedEntry[0] : "—",
+      topNeedCount: topNeedEntry ? topNeedEntry[1] : 0,
+      uniqueStaff,
+    };
+  }, [filtered]);
+
   const handleAdd = (m: CustomerMovement) => {
     addCustomerMovement(m);
     showToast(`Movement added for ${m.customerName}`);
@@ -1109,6 +1134,37 @@ function CustomerMovementTab() {
             : `from ${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`}
         </p>
         <AddMovementDialog onAdd={handleAdd} />
+      </div>
+
+      {/* Movement Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="flex items-center gap-3 p-3 rounded-xl border bg-card shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+            <Users className="h-4 w-4 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Total Visitors</p>
+            <p className="text-lg font-bold">{movementStats.total}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-xl border bg-card shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100">
+            <BarChart3 className="h-4 w-4 text-amber-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Top Need</p>
+            <p className="text-sm font-bold truncate">{movementStats.topNeed}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-xl border bg-card shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100">
+            <UserCheck className="h-4 w-4 text-green-600" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Staff Handled</p>
+            <p className="text-lg font-bold">{movementStats.uniqueStaff}</p>
+          </div>
+        </div>
       </div>
 
       <Card>
@@ -1129,8 +1185,10 @@ function CustomerMovementTab() {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No movements recorded for this date
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+                      <p className="text-sm text-muted-foreground">No movements recorded</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">Add a customer movement to get started</p>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -2138,17 +2196,42 @@ function RDListTab() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Total Active RDs", value: stats.totalActive, valueClass: "text-foreground" },
-          { label: `Expected (${formatPeriod(selectedPeriod)})`, value: `₹${stats.expectedTotal.toLocaleString("en-IN")}`, valueClass: "text-blue-600" },
-          { label: "Collected", value: `₹${stats.collectedTotal.toLocaleString("en-IN")}`, valueClass: "text-green-600" },
-          { label: "Defaulters", value: stats.defaulterCount, valueClass: "text-red-600" },
-        ].map(({ label, value, valueClass }) => (
-          <Card key={label} className="p-3">
-            <div className="text-xs text-muted-foreground mb-1">{label}</div>
-            <div className={cn("text-xl font-bold", valueClass)}>{value}</div>
-          </Card>
-        ))}
+        <div className="flex items-center gap-3 p-3 rounded-xl border bg-card shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <ListChecks className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Active RDs</p>
+            <p className="text-lg font-bold">{stats.totalActive}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-xl border bg-card shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+            <CircleDollarSign className="h-4 w-4 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Expected ({formatPeriod(selectedPeriod)})</p>
+            <p className="text-lg font-bold text-blue-600">₹{stats.expectedTotal.toLocaleString("en-IN")}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-xl border bg-card shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100">
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Collected</p>
+            <p className="text-lg font-bold text-green-600">₹{stats.collectedTotal.toLocaleString("en-IN")}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-3 rounded-xl border bg-card shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-100">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Defaulters</p>
+            <p className="text-lg font-bold text-red-600">{stats.defaulterCount}</p>
+          </div>
+        </div>
       </div>
 
       {/* Staff Summary Panel */}
@@ -2365,11 +2448,47 @@ function RDListTab() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CREPage() {
-  const { selectedDate, selectedDateEnd } = useApp();
+  const {
+    selectedDate, selectedDateEnd, entryDate,
+    creEntries, customerMovements, rdList, rdPayments,
+  } = useApp();
 
   const dateLabel = selectedDate === selectedDateEnd
     ? format(parseISO(selectedDate), "dd MMM yyyy")
     : `${format(parseISO(selectedDate), "dd MMM")} – ${format(parseISO(selectedDateEnd), "dd MMM yyyy")}`;
+
+  // Tab badge counts
+  const entriesCount = useMemo(
+    () => creEntries.filter((e) => e.date >= selectedDate && e.date <= selectedDateEnd).length,
+    [creEntries, selectedDate, selectedDateEnd]
+  );
+  const movementsCount = useMemo(
+    () => customerMovements.filter((m) => m.date >= selectedDate && m.date <= selectedDateEnd).length,
+    [customerMovements, selectedDate, selectedDateEnd]
+  );
+  const activeRDs = useMemo(
+    () => rdList.filter((r) => r.status === "Active").length,
+    [rdList]
+  );
+
+  // Summary strip metrics
+  const summary = useMemo(() => {
+    const filtered = creEntries.filter((e) => e.date >= selectedDate && e.date <= selectedDateEnd);
+    const memberships = filtered.filter((e) => e.category === "NewMembership").length;
+
+    const activeRDsList = rdList.filter((r) => r.status === "Active");
+    const currentPeriod = format(parseISO(entryDate), "yyyy-MM");
+    const expectedTotal = activeRDsList.reduce((sum, r) => sum + r.amount, 0);
+    const collectedTotal = rdPayments
+      .filter((p) => p.period === currentPeriod)
+      .reduce((sum, p) => sum + p.amount, 0);
+    const collectionPct = expectedTotal > 0 ? Math.round((collectedTotal / expectedTotal) * 100) : 0;
+
+    const paidRDIds = new Set(rdPayments.filter((p) => p.period === currentPeriod).map((p) => p.rdId));
+    const defaulters = activeRDsList.filter((r) => !paidRDIds.has(r.id)).length;
+
+    return { memberships, activeRDs: activeRDsList.length, collectionPct, defaulters };
+  }, [creEntries, rdList, rdPayments, selectedDate, selectedDateEnd, entryDate]);
 
   return (
     <div className="space-y-4">
@@ -2378,11 +2497,60 @@ export default function CREPage() {
         <p className="text-sm text-muted-foreground">{dateLabel}</p>
       </div>
 
+      {/* Quick Summary Strip */}
+      <Card className="bg-gradient-to-r from-slate-50 to-slate-100 border">
+        <CardContent className="py-2.5 px-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5 text-primary" />
+              <span className="text-muted-foreground">Entries:</span>
+              <span className="font-bold">{entriesCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-purple-500" />
+              <span className="text-muted-foreground">Memberships:</span>
+              <span className="font-bold text-purple-600">{summary.memberships}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="h-3.5 w-3.5 text-green-500" />
+              <span className="text-muted-foreground">Active RDs:</span>
+              <span className="font-bold text-green-600">{summary.activeRDs}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Percent className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-muted-foreground">Collection:</span>
+              <span className={cn("font-bold", summary.collectionPct >= 80 ? "text-green-600" : summary.collectionPct >= 50 ? "text-yellow-600" : "text-red-600")}>
+                {summary.collectionPct}%
+              </span>
+            </div>
+            {summary.defaulters > 0 && (
+              <div className="flex items-center gap-1.5 sm:ml-auto">
+                <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                <span className="font-semibold text-red-600">{summary.defaulters} defaulter{summary.defaulters !== 1 ? "s" : ""}</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="daily-report">
         <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="daily-report" className="text-xs sm:text-sm">Daily Report</TabsTrigger>
-          <TabsTrigger value="movements" className="text-xs sm:text-sm">Movement</TabsTrigger>
-          <TabsTrigger value="rd-list" className="text-xs sm:text-sm">RD List</TabsTrigger>
+          <TabsTrigger value="daily-report" className="text-xs sm:text-sm gap-1.5">
+            Daily Report
+            {entriesCount > 0 && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 rounded-full ml-1">{entriesCount}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="movements" className="text-xs sm:text-sm gap-1.5">
+            Movement
+            {movementsCount > 0 && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 rounded-full ml-1">{movementsCount}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="rd-list" className="text-xs sm:text-sm gap-1.5">
+            RD List
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 rounded-full ml-1">{activeRDs}</Badge>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily-report" className="mt-4">

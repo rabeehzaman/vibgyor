@@ -4,7 +4,7 @@ import { useApp } from "@/context/AppContext";
 import { useMemo, useState, useCallback } from "react";
 import { format, parseISO, subDays } from "date-fns";
 import { STAFF_MEMBERS } from "@/lib/constants";
-import { FundTransfer, Beneficiary, TransferStatus, BankAccount } from "@/lib/types";
+import { FundTransfer, Beneficiary, TransferStatus, BankAccount, ProfitPeriodType } from "@/lib/types";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -25,11 +25,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Plus, ArrowLeftRight, CheckCircle2, Clock, AlertTriangle, ChevronsUpDown, Check, UserPlus, Landmark,
+  Plus, ArrowLeftRight, CheckCircle2, Clock, AlertTriangle, ChevronsUpDown, Check, UserPlus, Landmark, Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ToastNotification, useToast } from "@/components/ui/toast-notification";
 import BankBook from "@/components/accountant/BankBook";
+import NetProfitCalculator from "@/components/accountant/NetProfitCalculator";
 import { createEmptyDailyBankBookState } from "@/lib/bank-book-utils";
 
 const MOCK_BALANCE = 2500000;
@@ -45,6 +46,7 @@ export default function AccountantPage() {
     selectedDate, selectedDateEnd, entryDate, fundTransfers, addFundTransfer, updateTransferStatus,
     beneficiaries, addBeneficiary,
     bankAccounts, addBankAccount, dailyBankBookStates, saveDailyBankBookState,
+    profitReports, saveProfitReport,
   } = useApp();
 
   const [open, setOpen] = useState(false);
@@ -53,6 +55,9 @@ export default function AccountantPage() {
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [beneficiaryErrors, setBeneficiaryErrors] = useState<Record<string, boolean>>({});
   const { toast, showToast, hideToast } = useToast();
+
+  // Net Profit state
+  const [profitPeriodType, setProfitPeriodType] = useState<ProfitPeriodType>("monthly");
 
   // Bank Book state
   const [selectedBankAccountId, setSelectedBankAccountId] = useState<string>("");
@@ -120,6 +125,8 @@ export default function AccountantPage() {
     },
     [saveDailyBankBookState]
   );
+
+  // Net Profit state managed by NetProfitCalculator internally
 
   // Auto-select first bank account
   useMemo(() => {
@@ -231,6 +238,10 @@ export default function AccountantPage() {
           <TabsTrigger value="bankbook">
             <Landmark className="h-4 w-4 mr-1.5" />
             Bank Book
+          </TabsTrigger>
+          <TabsTrigger value="netprofit">
+            <Calculator className="h-4 w-4 mr-1.5" />
+            Net Profit
           </TabsTrigger>
         </TabsList>
 
@@ -579,6 +590,17 @@ export default function AccountantPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ═══ TAB 3: Net Profit ═══ */}
+        <TabsContent value="netprofit" className="space-y-4 mt-4">
+          <NetProfitCalculator
+            allReports={profitReports}
+            onUpdate={saveProfitReport}
+            periodType={profitPeriodType}
+            onPeriodTypeChange={setProfitPeriodType}
+            entryDate={entryDate}
+          />
         </TabsContent>
       </Tabs>
 

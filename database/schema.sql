@@ -226,6 +226,23 @@ create table if not exists daily_bank_book_states (
   unique(date, bank_account_id)
 );
 
+-- Profit Reports (Net Profit Calculator)
+create table if not exists profit_reports (
+  id text primary key,
+  period text not null,
+  period_type text not null,
+  income_breakdown jsonb not null default '{}',
+  expense_breakdown jsonb not null default '{}',
+  total_income numeric not null default 0,
+  total_expenses numeric not null default 0,
+  net_profit numeric not null default 0,
+  target_profit numeric,
+  notes text,
+  created_at text not null,
+  updated_at text not null,
+  unique(period, period_type)
+);
+
 -- Tickets
 create table if not exists tickets (
   id text primary key,
