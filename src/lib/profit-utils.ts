@@ -1,16 +1,15 @@
 import type {
-  IncomeBreakdown,
-  ExpenseBreakdown,
+  ProfitLineItem,
   ProfitReport,
   ProfitPeriodType,
 } from "./types";
 
-export function calcTotalIncome(breakdown: IncomeBreakdown): number {
-  return Object.values(breakdown).reduce((sum, val) => sum + (val || 0), 0);
+export function calcTotalIncome(items: ProfitLineItem[]): number {
+  return items.reduce((sum, item) => sum + (item.amount || 0), 0);
 }
 
-export function calcTotalExpenses(breakdown: ExpenseBreakdown): number {
-  return Object.values(breakdown).reduce((sum, val) => sum + (val || 0), 0);
+export function calcTotalExpenses(items: ProfitLineItem[]): number {
+  return items.reduce((sum, item) => sum + (item.amount || 0), 0);
 }
 
 export function recalcProfitReport(report: ProfitReport): ProfitReport {
@@ -53,22 +52,8 @@ export function createEmptyProfitReport(
     id: `pr-${periodType}-${period}-${Date.now()}`,
     period,
     periodType,
-    incomeBreakdown: {
-      interestEarned: 0,
-      serviceFees: 0,
-      loanIncome: 0,
-      investmentIncome: 0,
-      otherIncome: 0,
-    },
-    expenseBreakdown: {
-      salariesWages: 0,
-      rentUtilities: 0,
-      interestPaid: 0,
-      operationalCosts: 0,
-      marketing: 0,
-      depreciation: 0,
-      otherExpenses: 0,
-    },
+    incomeBreakdown: [],
+    expenseBreakdown: [],
     totalIncome: 0,
     totalExpenses: 0,
     netProfit: 0,
@@ -114,41 +99,6 @@ export function getPeriodFromDate(date: string, periodType: ProfitPeriodType): s
   }
   const fy = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
   return `${fy}-${String((fy + 1) % 100).padStart(2, "0")}`;
-}
-
-/** Get month period strings ("YYYY-MM") that fall inside a calendar quarter */
-export function getMonthsInQuarter(quarter: string): string[] {
-  const match = quarter.match(/^(\d{4})-Q(\d)$/);
-  if (!match) return [];
-  const year = match[1];
-  const q = parseInt(match[2]);
-  const startMonth = (q - 1) * 3 + 1;
-  return [0, 1, 2].map((i) => `${year}-${String(startMonth + i).padStart(2, "0")}`);
-}
-
-/** Get month period strings ("YYYY-MM") that fall inside an Indian FY (Apr–Mar) */
-export function getMonthsInFY(fy: string): string[] {
-  const match = fy.match(/^(\d{4})-(\d{2})$/);
-  if (!match) return [];
-  const startYear = parseInt(match[1]);
-  const months: string[] = [];
-  for (let m = 4; m <= 12; m++) months.push(`${startYear}-${String(m).padStart(2, "0")}`);
-  for (let m = 1; m <= 3; m++) months.push(`${startYear + 1}-${String(m).padStart(2, "0")}`);
-  return months;
-}
-
-/** Sum breakdowns across multiple monthly reports */
-export function aggregateMonthlyReports(reports: ProfitReport[]): {
-  incomeBreakdown: IncomeBreakdown;
-  expenseBreakdown: ExpenseBreakdown;
-} {
-  const income: IncomeBreakdown = { interestEarned: 0, serviceFees: 0, loanIncome: 0, investmentIncome: 0, otherIncome: 0 };
-  const expense: ExpenseBreakdown = { salariesWages: 0, rentUtilities: 0, interestPaid: 0, operationalCosts: 0, marketing: 0, depreciation: 0, otherExpenses: 0 };
-  for (const r of reports) {
-    for (const k of Object.keys(income) as (keyof IncomeBreakdown)[]) income[k] += r.incomeBreakdown[k] || 0;
-    for (const k of Object.keys(expense) as (keyof ExpenseBreakdown)[]) expense[k] += r.expenseBreakdown[k] || 0;
-  }
-  return { incomeBreakdown: income, expenseBreakdown: expense };
 }
 
 export function getAvailablePeriods(periodType: ProfitPeriodType): { value: string; label: string }[] {

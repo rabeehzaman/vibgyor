@@ -3,15 +3,15 @@
 import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   TrendingUp, TrendingDown, Calculator, Target,
   Wallet, Receipt, PieChart, StickyNote, CheckCircle2, AlertTriangle,
-  ChevronDown,
+  ChevronDown, Plus, X,
 } from "lucide-react";
-import type { ProfitReport, ProfitPeriodType, IncomeBreakdown, ExpenseBreakdown } from "@/lib/types";
+import type { ProfitReport, ProfitPeriodType, ProfitLineItem } from "@/lib/types";
 import {
   recalcProfitReport,
   calcProfitMargin,
@@ -21,11 +21,6 @@ import {
   createEmptyProfitReport,
   getAvailablePeriods,
   getPeriodFromDate,
-  getMonthsInQuarter,
-  getMonthsInFY,
-  aggregateMonthlyReports,
-  calcTotalIncome,
-  calcTotalExpenses,
 } from "@/lib/profit-utils";
 import { cn } from "@/lib/utils";
 
@@ -40,24 +35,6 @@ interface NetProfitCalculatorProps {
 const INR = (n: number) =>
   n.toLocaleString("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 0 });
 
-const INCOME_LABELS: Record<keyof IncomeBreakdown, string> = {
-  interestEarned: "Interest Earned",
-  serviceFees: "Service Fees",
-  loanIncome: "Loan Income",
-  investmentIncome: "Investment Income",
-  otherIncome: "Other Income",
-};
-
-const EXPENSE_LABELS: Record<keyof ExpenseBreakdown, string> = {
-  salariesWages: "Salaries & Wages",
-  rentUtilities: "Rent & Utilities",
-  interestPaid: "Interest Paid",
-  operationalCosts: "Operational Costs",
-  marketing: "Marketing",
-  depreciation: "Depreciation",
-  otherExpenses: "Other Expenses",
-};
-
 const PERIOD_TYPE_OPTIONS: { value: ProfitPeriodType; label: string }[] = [
   { value: "monthly", label: "Monthly" },
   { value: "quarterly", label: "Quarterly" },
@@ -68,8 +45,6 @@ interface PeriodRow {
   value: string;
   label: string;
   report: ProfitReport;
-  isAggregated: boolean;
-  monthCount: number;
   hasData: boolean;
 }
 
@@ -79,48 +54,24 @@ export default function NetProfitCalculator({
   const currentPeriod = useMemo(() => getPeriodFromDate(entryDate, periodType), [entryDate, periodType]);
   const [expandedPeriod, setExpandedPeriod] = useState<string | null>(currentPeriod);
 
-  // Reset expanded to current period when period type changes
   const handlePeriodTypeChange = useCallback((pt: ProfitPeriodType) => {
     onPeriodTypeChange(pt);
     setExpandedPeriod(getPeriodFromDate(entryDate, pt));
   }, [onPeriodTypeChange, entryDate]);
 
-  // Build the list of period rows with computed report data
   const rows: PeriodRow[] = useMemo(() => {
     const periods = getAvailablePeriods(periodType);
     return periods.map((p) => {
-      if (periodType === "monthly") {
-        const existing = allReports.find((r) => r.period === p.value && r.periodType === "monthly");
-        const report = existing || createEmptyProfitReport(p.value, "monthly");
-        const hasData = report.totalIncome > 0 || report.totalExpenses > 0;
-        return { ...p, report, isAggregated: false, monthCount: 0, hasData };
-      }
-      // Quarterly / Yearly — aggregate from monthly
-      const monthPeriods = periodType === "quarterly"
-        ? getMonthsInQuarter(p.value)
-        : getMonthsInFY(p.value);
-      const monthlyReports = allReports.filter(
-        (r) => r.periodType === "monthly" && monthPeriods.includes(r.period)
-      );
-      const agg = aggregateMonthlyReports(monthlyReports);
-      const totalIncome = calcTotalIncome(agg.incomeBreakdown);
-      const totalExpenses = calcTotalExpenses(agg.expenseBreakdown);
-      const stored = allReports.find((r) => r.period === p.value && r.periodType === periodType);
-      const report: ProfitReport = {
-        ...(stored || createEmptyProfitReport(p.value, periodType)),
-        incomeBreakdown: agg.incomeBreakdown,
-        expenseBreakdown: agg.expenseBreakdown,
-        totalIncome,
-        totalExpenses,
-        netProfit: totalIncome - totalExpenses,
-      };
-      return { ...p, report, isAggregated: true, monthCount: monthlyReports.length, hasData: monthlyReports.length > 0 };
+      const existing = allReports.find((r) => r.period === p.value && r.periodType === periodType);
+      const report = existing || createEmptyProfitReport(p.value, periodType);
+      const hasData = report.totalIncome > 0 || report.totalExpenses > 0;
+      return { ...p, report, hasData };
     });
   }, [allReports, periodType]);
 
   return (
     <div className="space-y-3">
-      {/* ═══ Period Type Toggle ═══ */}
+      {/* Period Type Toggle */}
       <div className="flex rounded-lg overflow-hidden border w-fit">
         {PERIOD_TYPE_OPTIONS.map((opt) => (
           <button
@@ -138,7 +89,7 @@ export default function NetProfitCalculator({
         ))}
       </div>
 
-      {/* ═══ Period List ═══ */}
+      {/* Period List */}
       <div className="space-y-2">
         {rows.map((row) => {
           const isCurrent = row.value === currentPeriod;
@@ -149,7 +100,6 @@ export default function NetProfitCalculator({
 
           return (
             <Card key={row.value} className={cn(isCurrent && "ring-2 ring-primary/30")}>
-              {/* ─── Row Header (always visible) ─── */}
               <button
                 type="button"
                 onClick={() => setExpandedPeriod(isExpanded ? null : row.value)}
@@ -159,11 +109,6 @@ export default function NetProfitCalculator({
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">{row.label}</span>
                     {isCurrent && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Current</Badge>}
-                    {row.isAggregated && row.monthCount > 0 && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        {row.monthCount} month{row.monthCount !== 1 ? "s" : ""}
-                      </Badge>
-                    )}
                   </div>
                   {row.hasData ? (
                     <div className="flex items-center gap-3 mt-1 text-xs">
@@ -189,15 +134,10 @@ export default function NetProfitCalculator({
                 </div>
               </button>
 
-              {/* ─── Expanded Detail ─── */}
               {isExpanded && (
                 <CardContent className="pt-0 px-4 pb-4">
                   <Separator className="mb-4" />
-                  <PeriodDetail
-                    report={report}
-                    onUpdate={onUpdate}
-                    isAggregated={row.isAggregated}
-                  />
+                  <PeriodDetail report={report} onUpdate={onUpdate} />
                 </CardContent>
               )}
             </Card>
@@ -213,11 +153,10 @@ export default function NetProfitCalculator({
    ═══════════════════════════════════════════════════════════════ */
 
 function PeriodDetail({
-  report, onUpdate, isAggregated,
+  report, onUpdate,
 }: {
   report: ProfitReport;
   onUpdate: (report: ProfitReport) => void;
-  isAggregated: boolean;
 }) {
   const { totalIncome, totalExpenses, netProfit } = report;
   const profitMargin = calcProfitMargin(totalIncome, netProfit);
@@ -227,13 +166,33 @@ function PeriodDetail({
   const hasTarget = report.targetProfit != null && report.targetProfit > 0;
   const targetProgress = hasTarget ? calcTargetProgress(netProfit, report.targetProfit!) : 0;
 
-  const handleIncomeChange = useCallback((key: keyof IncomeBreakdown, value: number) => {
-    onUpdate(recalcProfitReport({ ...report, incomeBreakdown: { ...report.incomeBreakdown, [key]: value } }));
-  }, [report, onUpdate]);
+  const save = useCallback((updated: ProfitReport) => {
+    onUpdate(recalcProfitReport(updated));
+  }, [onUpdate]);
 
-  const handleExpenseChange = useCallback((key: keyof ExpenseBreakdown, value: number) => {
-    onUpdate(recalcProfitReport({ ...report, expenseBreakdown: { ...report.expenseBreakdown, [key]: value } }));
-  }, [report, onUpdate]);
+  const handleItemChange = useCallback((
+    side: "income" | "expense",
+    index: number,
+    field: "label" | "amount",
+    value: string | number,
+  ) => {
+    const key = side === "income" ? "incomeBreakdown" : "expenseBreakdown";
+    const items = [...report[key]];
+    items[index] = { ...items[index], [field]: field === "amount" ? Number(value) : value };
+    save({ ...report, [key]: items });
+  }, [report, save]);
+
+  const handleAddItem = useCallback((side: "income" | "expense") => {
+    const key = side === "income" ? "incomeBreakdown" : "expenseBreakdown";
+    const items = [...report[key], { id: `${side[0]}${Date.now()}`, label: "", amount: 0 }];
+    save({ ...report, [key]: items });
+  }, [report, save]);
+
+  const handleRemoveItem = useCallback((side: "income" | "expense", index: number) => {
+    const key = side === "income" ? "incomeBreakdown" : "expenseBreakdown";
+    const items = report[key].filter((_, i) => i !== index);
+    save({ ...report, [key]: items });
+  }, [report, save]);
 
   const handleTargetChange = useCallback((value: number) => {
     onUpdate({ ...report, targetProfit: value || undefined, updatedAt: new Date().toISOString() });
@@ -307,74 +266,124 @@ function PeriodDetail({
         {/* Income */}
         <Card>
           <CardHeader className="pb-2 pt-3 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Wallet className="h-4 w-4 text-green-600" /> Income Breakdown
-              {isAggregated && <span className="text-[10px] text-muted-foreground font-normal ml-1">(from monthly data)</span>}
+            <CardTitle className="text-sm font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-green-600" /> Income
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-green-600 hover:text-green-700"
+                onClick={() => handleAddItem("income")}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add
+              </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-4 pb-4 space-y-3">
-            {(Object.entries(INCOME_LABELS) as [keyof IncomeBreakdown, string][]).map(([key, label]) => (
-              <div key={key} className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-40 shrink-0">{label}</Label>
-                {isAggregated ? (
-                  <span className="flex-1 text-right font-mono text-sm pr-3">{INR(report.incomeBreakdown[key])}</span>
-                ) : (
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">&#8377;</span>
-                    <Input
-                      type="number"
-                      value={report.incomeBreakdown[key] || ""}
-                      onChange={(e) => handleIncomeChange(key, Number(e.target.value))}
-                      onFocus={(e) => e.target.select()}
-                      className="pl-7 font-mono text-right h-9"
-                      placeholder="0"
-                    />
-                  </div>
-                )}
+          <CardContent className="px-4 pb-4 space-y-2">
+            {report.incomeBreakdown.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-3">No income items. Click Add to start.</p>
+            )}
+            {report.incomeBreakdown.map((item, idx) => (
+              <div key={item.id} className="flex items-center gap-2">
+                <Input
+                  value={item.label}
+                  onChange={(e) => handleItemChange("income", idx, "label", e.target.value)}
+                  placeholder="Item name"
+                  className="flex-1 h-9 text-sm"
+                />
+                <div className="relative w-32 shrink-0">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">&#8377;</span>
+                  <Input
+                    type="number"
+                    value={item.amount || ""}
+                    onChange={(e) => handleItemChange("income", idx, "amount", e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className="pl-7 font-mono text-right h-9"
+                    placeholder="0"
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-red-500"
+                  onClick={() => handleRemoveItem("income", idx)}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
             ))}
-            <Separator />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">Total Income</span>
-              <span className="text-lg font-bold text-green-600 font-mono">{INR(totalIncome)}</span>
-            </div>
+            {report.incomeBreakdown.length > 0 && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Total Income</span>
+                  <span className="text-lg font-bold text-green-600 font-mono">{INR(totalIncome)}</span>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
         {/* Expenses */}
         <Card>
           <CardHeader className="pb-2 pt-3 px-4">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-red-600" /> Expense Breakdown
-              {isAggregated && <span className="text-[10px] text-muted-foreground font-normal ml-1">(from monthly data)</span>}
+            <CardTitle className="text-sm font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-red-600" /> Expenses
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-red-600 hover:text-red-700"
+                onClick={() => handleAddItem("expense")}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add
+              </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-4 pb-4 space-y-3">
-            {(Object.entries(EXPENSE_LABELS) as [keyof ExpenseBreakdown, string][]).map(([key, label]) => (
-              <div key={key} className="flex items-center gap-3">
-                <Label className="text-sm text-muted-foreground w-40 shrink-0">{label}</Label>
-                {isAggregated ? (
-                  <span className="flex-1 text-right font-mono text-sm pr-3">{INR(report.expenseBreakdown[key])}</span>
-                ) : (
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">&#8377;</span>
-                    <Input
-                      type="number"
-                      value={report.expenseBreakdown[key] || ""}
-                      onChange={(e) => handleExpenseChange(key, Number(e.target.value))}
-                      onFocus={(e) => e.target.select()}
-                      className="pl-7 font-mono text-right h-9"
-                      placeholder="0"
-                    />
-                  </div>
-                )}
+          <CardContent className="px-4 pb-4 space-y-2">
+            {report.expenseBreakdown.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-3">No expense items. Click Add to start.</p>
+            )}
+            {report.expenseBreakdown.map((item, idx) => (
+              <div key={item.id} className="flex items-center gap-2">
+                <Input
+                  value={item.label}
+                  onChange={(e) => handleItemChange("expense", idx, "label", e.target.value)}
+                  placeholder="Item name"
+                  className="flex-1 h-9 text-sm"
+                />
+                <div className="relative w-32 shrink-0">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">&#8377;</span>
+                  <Input
+                    type="number"
+                    value={item.amount || ""}
+                    onChange={(e) => handleItemChange("expense", idx, "amount", e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    className="pl-7 font-mono text-right h-9"
+                    placeholder="0"
+                  />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-red-500"
+                  onClick={() => handleRemoveItem("expense", idx)}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
             ))}
-            <Separator />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">Total Expenses</span>
-              <span className="text-lg font-bold text-red-600 font-mono">{INR(totalExpenses)}</span>
-            </div>
+            {report.expenseBreakdown.length > 0 && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Total Expenses</span>
+                  <span className="text-lg font-bold text-red-600 font-mono">{INR(totalExpenses)}</span>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -388,7 +397,7 @@ function PeriodDetail({
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-4">
           <div className="flex items-center gap-3">
-            <Label className="text-sm text-muted-foreground w-40 shrink-0">Set Target</Label>
+            <span className="text-sm text-muted-foreground w-24 shrink-0">Set Target</span>
             <div className="relative flex-1 max-w-xs">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">&#8377;</span>
               <Input
@@ -498,14 +507,14 @@ function PeriodDetail({
             <div className="rounded-lg border p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">Profit Margin</p>
               <p className={cn("text-2xl font-bold font-mono", profitMargin > 0 ? "text-green-600" : profitMargin < 0 ? "text-red-600" : "text-muted-foreground")}>
-                {totalIncome > 0 ? `${profitMargin.toFixed(1)}%` : "—"}
+                {totalIncome > 0 ? `${profitMargin.toFixed(1)}%` : "\u2014"}
               </p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Net Profit / Income</p>
             </div>
             <div className="rounded-lg border p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">Operating Ratio</p>
               <p className={cn("text-2xl font-bold font-mono", operatingRatio < 100 ? "text-green-600" : operatingRatio > 100 ? "text-red-600" : "text-amber-600")}>
-                {totalIncome > 0 ? `${operatingRatio.toFixed(1)}%` : "—"}
+                {totalIncome > 0 ? `${operatingRatio.toFixed(1)}%` : "\u2014"}
               </p>
               <p className="text-[10px] text-muted-foreground mt-0.5">Expenses / Income — lower is better</p>
             </div>

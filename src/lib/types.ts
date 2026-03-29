@@ -392,30 +392,18 @@ export interface MasterLists {
 // ─── NET PROFIT CALCULATOR (Accountant) ─────
 export type ProfitPeriodType = "monthly" | "quarterly" | "yearly";
 
-export interface IncomeBreakdown {
-  interestEarned: number;
-  serviceFees: number;
-  loanIncome: number;
-  investmentIncome: number;
-  otherIncome: number;
-}
-
-export interface ExpenseBreakdown {
-  salariesWages: number;
-  rentUtilities: number;
-  interestPaid: number;
-  operationalCosts: number;
-  marketing: number;
-  depreciation: number;
-  otherExpenses: number;
+export interface ProfitLineItem {
+  id: string;
+  label: string;
+  amount: number;
 }
 
 export interface ProfitReport {
   id: string;
   period: string;
   periodType: ProfitPeriodType;
-  incomeBreakdown: IncomeBreakdown;
-  expenseBreakdown: ExpenseBreakdown;
+  incomeBreakdown: ProfitLineItem[];
+  expenseBreakdown: ProfitLineItem[];
   totalIncome: number;
   totalExpenses: number;
   netProfit: number;
