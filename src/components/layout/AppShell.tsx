@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { CustomerHeader } from "@/components/customer/CustomerHeader";
 import { AppProvider } from "@/context/AppContext";
+import { CustomerAuthProvider } from "@/context/CustomerAuthContext";
 import { cn } from "@/lib/utils";
 
 const COLLAPSED_KEY = "vibgyor-sidebar-collapsed";
@@ -31,10 +32,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AppProvider>
       {isCustomerRoute ? (
-        <div className="flex min-h-screen flex-col bg-background">
-          <CustomerHeader />
-          <main className="flex-1 overflow-auto">{children}</main>
-        </div>
+        <CustomerAuthProvider>
+          <div className="flex min-h-screen flex-col bg-background">
+            <CustomerHeader />
+            <main className="flex-1 overflow-auto">{children}</main>
+          </div>
+        </CustomerAuthProvider>
       ) : (
         <div className="flex h-screen overflow-hidden bg-background">
           <Sidebar

@@ -272,3 +272,15 @@ create table if not exists ticket_replies (
   author_id text,
   "timestamp" text not null
 );
+
+-- Customer Users (authentication)
+create table if not exists customer_users (
+  id text primary key,
+  name text not null,
+  mobile text not null unique,
+  account_number text not null,
+  password_hash text not null,
+  password_salt text not null,
+  created_at text not null,
+  last_login_at text
+);

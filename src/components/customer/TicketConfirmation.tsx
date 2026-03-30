@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircle2, Copy, Search } from "lucide-react";
+import { CheckCircle2, Copy, Search, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TICKET_TYPE_LABELS } from "@/lib/constants";
 import { TicketType } from "@/lib/types";
+import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -14,6 +15,7 @@ interface TicketConfirmationProps {
 }
 
 export function TicketConfirmation({ referenceNumber, type, onNewRequest }: TicketConfirmationProps) {
+  const { customer } = useCustomerAuth();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -53,12 +55,21 @@ export function TicketConfirmation({ referenceNumber, type, onNewRequest }: Tick
         <Button variant="outline" className="flex-1" onClick={onNewRequest}>
           New Request
         </Button>
-        <Button className="flex-1" asChild>
-          <Link href="/customer/track">
-            <Search className="h-4 w-4 mr-1.5" />
-            Track Request
-          </Link>
-        </Button>
+        {customer ? (
+          <Button className="flex-1" asChild>
+            <Link href="/customer">
+              <LayoutDashboard className="h-4 w-4 mr-1.5" />
+              My Requests
+            </Link>
+          </Button>
+        ) : (
+          <Button className="flex-1" asChild>
+            <Link href="/customer/track">
+              <Search className="h-4 w-4 mr-1.5" />
+              Track Request
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );

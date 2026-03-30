@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
+import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import { Ticket } from "@/lib/types";
 import { TICKET_TYPE_LABELS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 
 export default function TrackPage() {
+  const { customer } = useCustomerAuth();
   const { getTicketByReference, addTicketReply, tickets } = useApp();
   const [refInput, setRefInput] = useState("");
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -54,7 +56,7 @@ export default function TrackPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <Link href="/customer" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="h-4 w-4" /> Back to Services
+        <ArrowLeft className="h-4 w-4" /> {customer ? "Back to Dashboard" : "Back to Services"}
       </Link>
 
       <h1 className="text-2xl font-bold mb-2">Track Your Request</h1>

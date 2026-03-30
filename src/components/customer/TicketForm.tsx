@@ -25,12 +25,17 @@ interface TicketFormProps {
     details: Record<string, string | number>;
   }) => void;
   onCancel: () => void;
+  defaultValues?: {
+    customerName?: string;
+    customerMobile?: string;
+    accountNumber?: string;
+  };
 }
 
-export function TicketForm({ type, onSubmit, onCancel }: TicketFormProps) {
-  const [customerName, setCustomerName] = useState("");
-  const [customerMobile, setCustomerMobile] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
+export function TicketForm({ type, onSubmit, onCancel, defaultValues }: TicketFormProps) {
+  const [customerName, setCustomerName] = useState(defaultValues?.customerName || "");
+  const [customerMobile, setCustomerMobile] = useState(defaultValues?.customerMobile || "");
+  const [accountNumber, setAccountNumber] = useState(defaultValues?.accountNumber || "");
   const [details, setDetails] = useState<Record<string, string>>({});
 
   const extraFields = getTicketFormFields(type);
@@ -60,6 +65,8 @@ export function TicketForm({ type, onSubmit, onCancel }: TicketFormProps) {
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="Enter your full name"
             required
+            readOnly={!!defaultValues?.customerName}
+            className={defaultValues?.customerName ? "bg-muted text-muted-foreground" : ""}
           />
         </div>
         <div>
@@ -70,6 +77,8 @@ export function TicketForm({ type, onSubmit, onCancel }: TicketFormProps) {
             onChange={(e) => setCustomerMobile(e.target.value)}
             placeholder="10-digit mobile number"
             required
+            readOnly={!!defaultValues?.customerMobile}
+            className={defaultValues?.customerMobile ? "bg-muted text-muted-foreground" : ""}
           />
         </div>
         <div>
@@ -80,6 +89,8 @@ export function TicketForm({ type, onSubmit, onCancel }: TicketFormProps) {
             onChange={(e) => setAccountNumber(e.target.value)}
             placeholder="Your account number"
             required
+            readOnly={!!defaultValues?.accountNumber}
+            className={defaultValues?.accountNumber ? "bg-muted text-muted-foreground" : ""}
           />
         </div>
 

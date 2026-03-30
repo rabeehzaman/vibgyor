@@ -458,3 +458,15 @@ export interface Ticket {
   resolvedAt?: string;
   closedAt?: string;
 }
+
+// ─── CUSTOMER AUTH ──────────────────────────
+export interface CustomerUser {
+  id: string;
+  name: string;
+  mobile: string;
+  accountNumber: string;
+  passwordHash: string;
+  passwordSalt: string;
+  createdAt: string;
+  lastLoginAt?: string;
+}

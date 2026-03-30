@@ -21,6 +21,7 @@ import {
   BankAccount,
   DailyBankBookState,
   ProfitReport,
+  CustomerUser,
 } from "./types";
 import { customerVisits as seedVisits } from "@/data/customer-visits";
 import { loanEnquiries as seedLoans } from "@/data/loan-enquiries";
@@ -232,6 +233,24 @@ export const upsertDailyBankBookState = (s: DailyBankBookState) => upsertOne("da
 
 // Profit Reports
 export const upsertProfitReport = (r: ProfitReport) => upsertOne("profit_reports", r);
+
+// Customer Users (auth)
+export const insertCustomerUser = (u: CustomerUser) => insertOne("customer_users", u);
+export const updateCustomerUserLastLogin = (id: string) =>
+  updateById("customer_users", id, { lastLoginAt: new Date().toISOString() });
+
+export async function fetchCustomerUserByMobile(mobile: string): Promise<CustomerUser | null> {
+  const { data, error } = await getSupabase()
+    .from("customer_users")
+    .select("*")
+    .eq("mobile", mobile)
+    .maybeSingle();
+  if (error) {
+    console.error("[supabase] fetch customer_users:", error.message);
+    return null;
+  }
+  return data ? toCamel<CustomerUser>(data) : null;
+}
 
 // ─── DEFAULT MASTER LISTS ────────────────────────
 
