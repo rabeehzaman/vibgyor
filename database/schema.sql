@@ -176,8 +176,24 @@ create table if not exists rd_payments (
 create table if not exists schemes (
   id text primary key,
   name text not null,
-  type text not null
+  type text not null,
+  description text,
+  interest_rate numeric,
+  tenure_months int,
+  min_amount numeric,
+  max_amount numeric,
+  features jsonb,
+  active boolean default true
 );
+
+-- Migration: add customer-facing columns for existing DBs
+alter table schemes add column if not exists description text;
+alter table schemes add column if not exists interest_rate numeric;
+alter table schemes add column if not exists tenure_months int;
+alter table schemes add column if not exists min_amount numeric;
+alter table schemes add column if not exists max_amount numeric;
+alter table schemes add column if not exists features jsonb;
+alter table schemes add column if not exists active boolean default true;
 
 -- Custom Referrers
 create table if not exists custom_referrers (

@@ -30,13 +30,20 @@ interface TicketFormProps {
     customerMobile?: string;
     accountNumber?: string;
   };
+  defaultDetails?: Record<string, string | number>;
+  lockedDetailKeys?: string[];
 }
 
-export function TicketForm({ type, onSubmit, onCancel, defaultValues }: TicketFormProps) {
+export function TicketForm({ type, onSubmit, onCancel, defaultValues, defaultDetails, lockedDetailKeys }: TicketFormProps) {
   const [customerName, setCustomerName] = useState(defaultValues?.customerName || "");
   const [customerMobile, setCustomerMobile] = useState(defaultValues?.customerMobile || "");
   const [accountNumber, setAccountNumber] = useState(defaultValues?.accountNumber || "");
-  const [details, setDetails] = useState<Record<string, string>>({});
+  const [details, setDetails] = useState<Record<string, string>>(() => {
+    if (!defaultDetails) return {};
+    const init: Record<string, string> = {};
+    for (const [k, v] of Object.entries(defaultDetails)) init[k] = String(v);
+    return init;
+  });
 
   const extraFields = getTicketFormFields(type);
 
@@ -94,47 +101,56 @@ export function TicketForm({ type, onSubmit, onCancel, defaultValues }: TicketFo
           />
         </div>
 
-        {extraFields.map((field) => (
-          <div key={field.key}>
-            <Label htmlFor={field.key}>
-              {field.label} {field.required && "*"}
-            </Label>
-            {field.type === "select" ? (
-              <Select
-                value={details[field.key] || ""}
-                onValueChange={(v) => setDetails((prev) => ({ ...prev, [field.key]: v }))}
-                required={field.required}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {field.options?.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : field.type === "textarea" ? (
-              <Textarea
-                id={field.key}
-                value={details[field.key] || ""}
-                onChange={(e) => setDetails((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                placeholder={field.placeholder}
-                required={field.required}
-                rows={4}
-              />
-            ) : (
-              <Input
-                id={field.key}
-                type={field.type}
-                value={details[field.key] || ""}
-                onChange={(e) => setDetails((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                placeholder={field.placeholder}
-                required={field.required}
-              />
-            )}
-          </div>
-        ))}
+        {extraFields.map((field) => {
+          const isLocked = lockedDetailKeys?.includes(field.key) ?? false;
+          const lockedClass = isLocked ? "bg-muted text-muted-foreground" : "";
+          return (
+            <div key={field.key}>
+              <Label htmlFor={field.key}>
+                {field.label} {field.required && "*"}
+              </Label>
+              {field.type === "select" ? (
+                <Select
+                  value={details[field.key] || ""}
+                  onValueChange={(v) => setDetails((prev) => ({ ...prev, [field.key]: v }))}
+                  required={field.required}
+                  disabled={isLocked}
+                >
+                  <SelectTrigger className={lockedClass}>
+                    <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {field.options?.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : field.type === "textarea" ? (
+                <Textarea
+                  id={field.key}
+                  value={details[field.key] || ""}
+                  onChange={(e) => setDetails((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                  placeholder={field.placeholder}
+                  required={field.required}
+                  readOnly={isLocked}
+                  className={lockedClass}
+                  rows={4}
+                />
+              ) : (
+                <Input
+                  id={field.key}
+                  type={field.type}
+                  value={details[field.key] || ""}
+                  onChange={(e) => setDetails((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                  placeholder={field.placeholder}
+                  required={field.required}
+                  readOnly={isLocked}
+                  className={lockedClass}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex gap-2 pt-2">

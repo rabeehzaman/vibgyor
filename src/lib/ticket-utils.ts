@@ -25,9 +25,6 @@ export interface TicketFormField {
 export function getTicketFormFields(type: TicketType): TicketFormField[] {
   switch (type) {
     case "BalanceEnquiry":
-    case "PassbookRequest":
-    case "AccountDetails":
-    case "CurrentMobileNumber":
       return [];
     case "TransferRequest":
       return [
@@ -40,11 +37,6 @@ export function getTicketFormFields(type: TicketType): TicketFormField[] {
     case "ChequeBookRequest":
       return [
         { key: "numberOfLeaves", label: "Number of Leaves", type: "select", required: true, options: ["25", "50", "100"] },
-      ];
-    case "DDBookRequest":
-      return [
-        { key: "ddPayee", label: "DD Payee Name", type: "text", required: true },
-        { key: "ddAmount", label: "DD Amount (₹)", type: "number", required: true },
       ];
     case "MobileNumberChange":
       return [
@@ -63,6 +55,22 @@ export function getTicketFormFields(type: TicketType): TicketFormField[] {
       return [
         { key: "depositType", label: "Deposit Type", type: "select", required: true, options: ["FD", "RD"] },
         { key: "depositAccountNumber", label: "Deposit Account Number", type: "text", required: true },
+      ];
+    case "DepositApplication":
+      return [
+        { key: "scheme", label: "Scheme", type: "text", required: true },
+        { key: "depositType", label: "Deposit Type", type: "select", required: true, options: ["FD", "RD"] },
+        { key: "amount", label: "Amount (₹)", type: "number", required: true },
+        { key: "tenureMonths", label: "Preferred Tenure (months)", type: "number" },
+        { key: "notes", label: "Notes", type: "textarea", placeholder: "Anything we should know?" },
+      ];
+    case "LoanApplication":
+      return [
+        { key: "scheme", label: "Scheme", type: "text", required: true },
+        { key: "amount", label: "Loan Amount (₹)", type: "number", required: true },
+        { key: "tenureMonths", label: "Preferred Tenure (months)", type: "number" },
+        { key: "purpose", label: "Purpose", type: "text", placeholder: "e.g. Business expansion" },
+        { key: "notes", label: "Notes", type: "textarea", placeholder: "Anything we should know?" },
       ];
     default:
       return [];

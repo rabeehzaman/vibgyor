@@ -164,6 +164,11 @@ export async function upsertRDPayment(payment: RDPayment) {
 
 // Schemes
 export const insertScheme = (s: Scheme) => insertOne("schemes", s);
+export const updateScheme = (id: string, u: Partial<Scheme>) => updateById("schemes", id, asRecord(u));
+export async function deleteScheme(id: string) {
+  const { error } = await getSupabase().from("schemes").delete().eq("id", id);
+  if (error) console.error("[supabase] delete schemes:", error.message);
+}
 
 // Custom Referrers
 export const insertCustomReferrer = (r: CustomReferrer) => insertOne("custom_referrers", r);

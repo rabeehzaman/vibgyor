@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, LogIn, Plus, LayoutDashboard, LogOut, User } from "lucide-react";
+import { Search, LogIn, LayoutDashboard, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCustomerAuth } from "@/context/CustomerAuthContext";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,6 @@ export function CustomerHeader() {
           {customer ? (
             <>
               {navLink("/customer", "Dashboard", <LayoutDashboard className="h-4 w-4" />)}
-              {navLink("/customer/new-request", "New Request", <Plus className="h-4 w-4" />)}
               {navLink("/customer/track", "Track", <Search className="h-4 w-4" />)}
               <div className="ml-2 flex items-center gap-2 border-l border-white/20 pl-3">
                 <span className="hidden sm:flex items-center gap-1 text-sm text-white/80">

@@ -61,13 +61,6 @@ test.describe("Customer Authentication", () => {
     await expect(page).toHaveURL(/\/customer\/login/);
   });
 
-  test("unauthenticated user is redirected from new-request to login", async ({ page }) => {
-    await page.goto("/customer/login");
-    await page.evaluate(() => localStorage.removeItem("vibgyor-customer"));
-    await page.goto("/customer/new-request");
-    await expect(page).toHaveURL(/\/customer\/login/);
-  });
-
   test("track page is accessible without login", async ({ page }) => {
     await page.goto("/customer/login");
     await page.evaluate(() => localStorage.removeItem("vibgyor-customer"));
@@ -152,10 +145,9 @@ test.describe("Customer Registration + Login Flow", () => {
     await page.getByRole("button", { name: /login/i }).click();
     await expect(page).toHaveURL("/customer", { timeout: 10000 });
 
-    // Header should show Dashboard, New Request, Track, and Logout
+    // Header should show Dashboard, Track, and Logout
     const header = page.locator("header");
     await expect(header.getByRole("link", { name: /dashboard/i })).toBeVisible();
-    await expect(header.getByRole("link", { name: /new request/i })).toBeVisible();
     await expect(header.getByRole("link", { name: /track/i })).toBeVisible();
     await expect(header.getByRole("button", { name: /logout/i })).toBeVisible();
   });
@@ -223,11 +215,11 @@ test.describe("Customer Service Request Flow", () => {
     await ensureLoggedIn(page);
   });
 
-  test("new request page loads with pre-filled customer info", async ({ page }) => {
-    await page.goto("/customer/new-request");
-    await expect(page.locator("h1")).toContainText("New Service Request");
+  test("dashboard service opens form with pre-filled customer info", async ({ page }) => {
+    await page.goto("/customer");
+    await expect(page.locator("h1")).toContainText(`Welcome, ${name}`);
 
-    // Click a service card (Balance Enquiry)
+    // Click a service card (Balance Enquiry) directly on the dashboard
     await page.getByText("Check your account balance").click();
 
     // Form should have pre-filled read-only fields
@@ -245,9 +237,9 @@ test.describe("Customer Service Request Flow", () => {
   });
 
   test("submit a service request and see it in dashboard", async ({ page }) => {
-    await page.goto("/customer/new-request");
+    await page.goto("/customer");
 
-    // Click Balance Enquiry
+    // Click Balance Enquiry directly on the dashboard
     await page.getByText("Check your account balance").click();
 
     // Submit the form (fields are pre-filled)
@@ -269,19 +261,19 @@ test.describe("Customer Service Request Flow", () => {
 
   test("click ticket in dashboard opens detail page", async ({ page }) => {
     // First create a ticket
-    await page.goto("/customer/new-request");
-    await page.getByText("Request passbook update").click();
+    await page.goto("/customer");
+    await page.getByText("Check your account balance").click();
     await page.getByRole("button", { name: /submit request/i }).click();
     await expect(page.getByText("Request Submitted!")).toBeVisible();
     await page.getByRole("link", { name: /my requests/i }).click();
     await expect(page).toHaveURL("/customer", { timeout: 10000 });
 
-    // Click on the Passbook Request ticket
-    await page.getByText("Passbook Request").first().click();
+    // Click on the Balance Enquiry ticket
+    await page.getByText("Balance Enquiry").first().click();
     await expect(page).toHaveURL(/\/customer\/ticket\//);
 
     // Detail page should show ticket info
-    await expect(page.getByText("Passbook Request")).toBeVisible();
+    await expect(page.getByText("Balance Enquiry")).toBeVisible();
     await expect(page.getByRole("main").getByText(name)).toBeVisible();
     await expect(page.getByRole("main").getByText(account)).toBeVisible();
 
@@ -300,9 +292,9 @@ test.describe("Customer Service Request Flow", () => {
     await page.goto("/customer");
     const ticketsBefore = await page.locator("a[href^='/customer/ticket/']").count();
 
-    // Create a new request
-    await page.goto("/customer/new-request");
-    await page.getByText("Check registered mobile").click();
+    // Create a new request directly from the dashboard
+    await page.goto("/customer");
+    await page.getByText("Check your account balance").click();
     await page.getByRole("button", { name: /submit request/i }).click();
     await expect(page.getByText("Request Submitted!")).toBeVisible();
     await page.getByRole("link", { name: /my requests/i }).click();

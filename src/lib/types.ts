@@ -364,6 +364,13 @@ export interface Scheme {
   id: string;
   name: string;
   type: "RD" | "FD" | "Loan" | "Membership";
+  description?: string;
+  interestRate?: number;
+  tenureMonths?: number;
+  minAmount?: number;
+  maxAmount?: number;
+  features?: string[];
+  active?: boolean;
 }
 
 export interface CustomReferrer {
@@ -418,14 +425,12 @@ export type TicketType =
   | "BalanceEnquiry"
   | "TransferRequest"
   | "ChequeBookRequest"
-  | "PassbookRequest"
-  | "DDBookRequest"
   | "MobileNumberChange"
-  | "AccountDetails"
-  | "CurrentMobileNumber"
   | "Complaint"
   | "LoanStatusInquiry"
-  | "FDRDMaturityInquiry";
+  | "FDRDMaturityInquiry"
+  | "DepositApplication"
+  | "LoanApplication";
 
 export type TicketStatus = "Open" | "In Progress" | "Resolved" | "Closed";
 export type TicketPriority = "Low" | "Medium" | "High" | "Urgent";

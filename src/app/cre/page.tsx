@@ -40,7 +40,7 @@ import {
 import {
   Plus, Users, TrendingUp, Repeat, FileText, Search, Settings, Check, ChevronsUpDown,
   ChevronLeft, ChevronRight, ChevronDown, UserCheck, BarChart3, AlertCircle, Percent,
-  ListChecks, CircleDollarSign,
+  ListChecks, CircleDollarSign, Pencil, Trash2,
 } from "lucide-react";
 import { ToastNotification, useToast } from "@/components/ui/toast-notification";
 import { KPICard } from "@/components/dashboard/KPICard";
@@ -142,23 +142,130 @@ function hasOverduePriorPayments(rd: RecurringDeposit, currentPeriod: string, rd
   });
 }
 
+// ─── Scheme Editor Dialog ────────────────────────────────────────────────────
+
+function SchemeEditorDialog({
+  open,
+  onOpenChange,
+  scheme,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  scheme: Scheme | null;
+  onSave: (data: Omit<Scheme, "id">, existingId: string | null) => void;
+}) {
+  const [name, setName] = useState(scheme?.name ?? "");
+  const [type, setType] = useState<Scheme["type"] | "">(scheme?.type ?? "");
+  const [description, setDescription] = useState(scheme?.description ?? "");
+  const [interestRate, setInterestRate] = useState(scheme?.interestRate != null ? String(scheme.interestRate) : "");
+  const [tenureMonths, setTenureMonths] = useState(scheme?.tenureMonths != null ? String(scheme.tenureMonths) : "");
+  const [minAmount, setMinAmount] = useState(scheme?.minAmount != null ? String(scheme.minAmount) : "");
+  const [maxAmount, setMaxAmount] = useState(scheme?.maxAmount != null ? String(scheme.maxAmount) : "");
+  const [features, setFeatures] = useState((scheme?.features ?? []).join("\n"));
+  const [active, setActive] = useState(scheme?.active !== false);
+  const [nameErr, setNameErr] = useState(false);
+  const [typeErr, setTypeErr] = useState(false);
+
+  const handleSubmit = () => {
+    let hasErr = false;
+    if (!name.trim()) { setNameErr(true); hasErr = true; }
+    if (!type) { setTypeErr(true); hasErr = true; }
+    if (hasErr) return;
+    const featureList = features.split("\n").map((f) => f.trim()).filter(Boolean);
+    const data: Omit<Scheme, "id"> = {
+      name: name.trim(),
+      type: type as Scheme["type"],
+      description: description.trim() || undefined,
+      interestRate: interestRate ? Number(interestRate) : undefined,
+      tenureMonths: tenureMonths ? Number(tenureMonths) : undefined,
+      minAmount: minAmount ? Number(minAmount) : undefined,
+      maxAmount: maxAmount ? Number(maxAmount) : undefined,
+      features: featureList.length ? featureList : undefined,
+      active,
+    };
+    onSave(data, scheme?.id ?? null);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{scheme ? "Edit Scheme" : "New Scheme"}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1">
+            <Label>Name *</Label>
+            <Input value={name} onChange={(e) => { setName(e.target.value); setNameErr(false); }} className={nameErr ? "border-red-500" : ""} placeholder="e.g. Diamond RD" />
+            {nameErr && <p className="text-xs text-red-500">Required</p>}
+          </div>
+          <div className="grid gap-1">
+            <Label>Type *</Label>
+            <Select value={type} onValueChange={(v) => { setType(v as Scheme["type"]); setTypeErr(false); }}>
+              <SelectTrigger className={typeErr ? "border-red-500" : ""}><SelectValue placeholder="Select type" /></SelectTrigger>
+              <SelectContent>
+                {(["RD", "FD", "Loan", "Membership"] as const).map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {typeErr && <p className="text-xs text-red-500">Required</p>}
+          </div>
+          <div className="grid gap-1">
+            <Label>Description</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Short description shown to customers" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1">
+              <Label>Interest Rate (%)</Label>
+              <Input type="number" step="0.01" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} placeholder="e.g. 8.5" />
+            </div>
+            <div className="grid gap-1">
+              <Label>Tenure (months)</Label>
+              <Input type="number" value={tenureMonths} onChange={(e) => setTenureMonths(e.target.value)} placeholder="e.g. 36" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1">
+              <Label>Min Amount (₹)</Label>
+              <Input type="number" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} placeholder="e.g. 1000" />
+            </div>
+            <div className="grid gap-1">
+              <Label>Max Amount (₹)</Label>
+              <Input type="number" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} placeholder="optional" />
+            </div>
+          </div>
+          <div className="grid gap-1">
+            <Label>Features <span className="text-xs text-muted-foreground">(one per line)</span></Label>
+            <Textarea value={features} onChange={(e) => setFeatures(e.target.value)} rows={3} placeholder={"Flexible tenure\nAuto-renewal"} />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+            Show to customers
+          </label>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button className="flex-1" onClick={handleSubmit}>{scheme ? "Save" : "Create"}</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Manage Master Data Dialog ────────────────────────────────────────────────
 
-function ManageMasterDataDialog({
-  schemes,
-  onAddScheme,
-}: {
-  schemes: Scheme[];
-  onAddScheme: (s: Scheme) => void;
-}) {
-  const { customReferrers, addCustomReferrer, customerAccounts, addCustomerAccount, masterLists, addToMasterList } = useApp();
+function ManageMasterDataDialog() {
+  const {
+    schemes, addScheme, updateScheme, deleteScheme,
+    customReferrers, addCustomReferrer,
+    customerAccounts, addCustomerAccount,
+    masterLists, addToMasterList,
+  } = useApp();
   const { toast, showToast, hideToast } = useToast();
   const [open, setOpen] = useState(false);
-
-  const [schemeName, setSchemeName] = useState("");
-  const [schemeType, setSchemeType] = useState<Scheme["type"] | "">("");
-  const [schemeNameErr, setSchemeNameErr] = useState(false);
-  const [schemeTypeErr, setSchemeTypeErr] = useState(false);
+  const [schemeEditorOpen, setSchemeEditorOpen] = useState(false);
+  const [editingScheme, setEditingScheme] = useState<Scheme | null>(null);
 
   const [referrerName, setReferrerName] = useState("");
   const [referrerNameErr, setReferrerNameErr] = useState(false);
@@ -172,15 +279,31 @@ function ManageMasterDataDialog({
   const [newListValue, setNewListValue] = useState("");
   const [newListValueErr, setNewListValueErr] = useState(false);
 
-  const handleAddScheme = () => {
-    let hasErr = false;
-    if (!schemeName.trim()) { setSchemeNameErr(true); hasErr = true; }
-    if (!schemeType) { setSchemeTypeErr(true); hasErr = true; }
-    if (hasErr) return;
-    onAddScheme({ id: `sch${Date.now()}`, name: schemeName.trim(), type: schemeType as Scheme["type"] });
-    setSchemeName("");
-    setSchemeType("");
-    showToast(`Scheme "${schemeName.trim()}" added`);
+  const handleOpenNewScheme = () => {
+    setEditingScheme(null);
+    setSchemeEditorOpen(true);
+  };
+
+  const handleOpenEditScheme = (s: Scheme) => {
+    setEditingScheme(s);
+    setSchemeEditorOpen(true);
+  };
+
+  const handleDeleteScheme = (s: Scheme) => {
+    if (typeof window !== "undefined" && !window.confirm(`Delete scheme "${s.name}"?`)) return;
+    deleteScheme(s.id);
+    showToast(`Scheme "${s.name}" deleted`);
+  };
+
+  const handleSaveScheme = (data: Omit<Scheme, "id">, existingId: string | null) => {
+    if (existingId) {
+      updateScheme(existingId, data);
+      showToast(`Scheme "${data.name}" updated`);
+    } else {
+      addScheme({ id: `sch${Date.now()}`, ...data });
+      showToast(`Scheme "${data.name}" added`);
+    }
+    setSchemeEditorOpen(false);
   };
 
   const handleAddReferrer = () => {
@@ -227,13 +350,20 @@ function ManageMasterDataDialog({
             <TabsTrigger value="lists" className="text-xs">Lists</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="schemes" className="space-y-4 py-2">
-            <div className="max-h-48 overflow-y-auto border rounded-md">
+          <TabsContent value="schemes" className="space-y-3 py-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">{schemes.length} scheme{schemes.length === 1 ? "" : "s"}</p>
+              <Button size="sm" onClick={handleOpenNewScheme}><Plus className="h-4 w-4 mr-1" /> New Scheme</Button>
+            </div>
+            <div className="max-h-80 overflow-y-auto border rounded-md">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Rate</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[80px]" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -241,34 +371,38 @@ function ManageMasterDataDialog({
                     <TableRow key={s.id}>
                       <TableCell className="text-sm">{s.name}</TableCell>
                       <TableCell><Badge variant="outline">{s.type}</Badge></TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {s.interestRate != null ? `${s.interestRate}%` : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {s.active === false ? (
+                          <Badge variant="outline" className="text-muted-foreground">Hidden</Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-green-300 text-green-700">Active</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenEditScheme(s)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:text-red-700" onClick={() => handleDeleteScheme(s)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-            <div className="border-t pt-3">
-              <p className="text-sm font-medium mb-2">Add New Scheme</p>
-              <div className="grid gap-2">
-                <div className="grid gap-1">
-                  <Label>Scheme Name</Label>
-                  <Input value={schemeName} onChange={(e) => { setSchemeName(e.target.value); setSchemeNameErr(false); }} className={schemeNameErr ? "border-red-500" : ""} placeholder="e.g. Diamond RD" />
-                  {schemeNameErr && <p className="text-xs text-red-500">Required</p>}
-                </div>
-                <div className="grid gap-1">
-                  <Label>Type</Label>
-                  <Select value={schemeType} onValueChange={(v) => { setSchemeType(v as Scheme["type"]); setSchemeTypeErr(false); }}>
-                    <SelectTrigger className={schemeTypeErr ? "border-red-500" : ""}><SelectValue placeholder="Select type" /></SelectTrigger>
-                    <SelectContent>
-                      {(["RD", "FD", "Loan", "Membership"] as const).map((t) => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {schemeTypeErr && <p className="text-xs text-red-500">Required</p>}
-                </div>
-                <Button onClick={handleAddScheme}><Plus className="h-4 w-4 mr-1" /> Add Scheme</Button>
-              </div>
-            </div>
+            <SchemeEditorDialog
+              key={editingScheme?.id ?? "new"}
+              open={schemeEditorOpen}
+              onOpenChange={setSchemeEditorOpen}
+              scheme={editingScheme}
+              onSave={handleSaveScheme}
+            />
           </TabsContent>
 
           <TabsContent value="referrers" className="space-y-4 py-2">
@@ -948,7 +1082,7 @@ function CategorySection({
 }
 
 function DailyReportTab() {
-  const { selectedDate, selectedDateEnd, creEntries, addCREEntry, schemes, addScheme } = useApp();
+  const { selectedDate, selectedDateEnd, creEntries, addCREEntry, schemes } = useApp();
   const { toast, showToast, hideToast } = useToast();
 
   const filtered = useMemo(
@@ -978,7 +1112,7 @@ function DailyReportTab() {
         </p>
         <div className="flex items-center gap-2">
           <QuickAddEntryDialog schemes={schemes} onAdd={handleAdd} />
-          <ManageMasterDataDialog schemes={schemes} onAddScheme={addScheme} />
+          <ManageMasterDataDialog />
         </div>
       </div>
 

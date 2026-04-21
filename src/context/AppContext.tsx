@@ -95,6 +95,8 @@ interface AppState {
   addRDPayment: (payment: RDPayment) => void;
   schemes: Scheme[];
   addScheme: (scheme: Scheme) => void;
+  updateScheme: (id: string, updates: Partial<Scheme>) => void;
+  deleteScheme: (id: string) => void;
   customReferrers: CustomReferrer[];
   addCustomReferrer: (r: CustomReferrer) => void;
   customerAccounts: CustomerAccount[];
@@ -461,6 +463,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     db.insertScheme(scheme);
   }, []);
 
+  const updateScheme = useCallback((id: string, updates: Partial<Scheme>) => {
+    setSchemes((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    db.updateScheme(id, updates);
+  }, []);
+
+  const deleteScheme = useCallback((id: string) => {
+    setSchemes((prev) => prev.filter((s) => s.id !== id));
+    db.deleteScheme(id);
+  }, []);
+
   const addCustomReferrer = useCallback((r: CustomReferrer) => {
     setCustomReferrers((prev) => [...prev, r]);
     db.insertCustomReferrer(r);
@@ -610,7 +622,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         customerMovements, addCustomerMovement,
         rdList, addRD, updateRDStatus,
         rdPayments, addRDPayment,
-        schemes, addScheme,
+        schemes, addScheme, updateScheme, deleteScheme,
         customReferrers, addCustomReferrer,
         customerAccounts, addCustomerAccount,
         masterLists, addToMasterList,
