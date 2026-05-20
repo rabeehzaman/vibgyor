@@ -28,3 +28,11 @@ export async function verifyPassword(
   const hash = await hashPassword(password, salt);
   return hash === storedHash;
 }
+
+// PIN uses the same salted-SHA-256 scheme as the password, with a separate salt.
+export const hashPin = hashPassword;
+export const verifyPin = verifyPassword;
+
+export function isValidPin(pin: string): boolean {
+  return /^\d{4}$/.test(pin);
+}

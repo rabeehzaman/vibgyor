@@ -472,6 +472,21 @@ export interface CustomerUser {
   accountNumber: string;
   passwordHash: string;
   passwordSalt: string;
+  pinHash?: string;
+  pinSalt?: string;
+  pinUpdatedAt?: string;
   createdAt: string;
   lastLoginAt?: string;
+}
+
+// ─── CUSTOMER BENEFICIARIES (per-customer, for fund transfers) ─
+export interface CustomerBeneficiary {
+  id: string;
+  customerUserId: string;
+  nickname: string;
+  beneficiaryName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string;
+  createdAt: string;
 }

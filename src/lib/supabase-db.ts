@@ -22,6 +22,7 @@ import {
   DailyBankBookState,
   ProfitReport,
   CustomerUser,
+  CustomerBeneficiary,
 } from "./types";
 import { customerVisits as seedVisits } from "@/data/customer-visits";
 import { loanEnquiries as seedLoans } from "@/data/loan-enquiries";
@@ -255,6 +256,50 @@ export async function fetchCustomerUserByMobile(mobile: string): Promise<Custome
     return null;
   }
   return data ? toCamel<CustomerUser>(data) : null;
+}
+
+export async function fetchCustomerUserById(id: string): Promise<CustomerUser | null> {
+  const { data, error } = await getSupabase()
+    .from("customer_users")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("[supabase] fetch customer_users by id:", error.message);
+    return null;
+  }
+  return data ? toCamel<CustomerUser>(data) : null;
+}
+
+export async function updateCustomerUserPin(id: string, pinHash: string, pinSalt: string) {
+  await updateById("customer_users", id, {
+    pinHash,
+    pinSalt,
+    pinUpdatedAt: new Date().toISOString(),
+  });
+}
+
+// Customer Beneficiaries (per-customer)
+export const insertCustomerBeneficiary = (b: CustomerBeneficiary) =>
+  insertOne("customer_beneficiaries", b);
+
+export async function deleteCustomerBeneficiary(id: string) {
+  const { error } = await getSupabase().from("customer_beneficiaries").delete().eq("id", id);
+  if (error) console.error("[supabase] delete customer_beneficiaries:", error.message);
+}
+
+export async function fetchCustomerBeneficiariesByUserId(
+  customerUserId: string
+): Promise<CustomerBeneficiary[]> {
+  const { data, error } = await getSupabase()
+    .from("customer_beneficiaries")
+    .select("*")
+    .eq("customer_user_id", customerUserId);
+  if (error) {
+    console.error("[supabase] fetch customer_beneficiaries:", error.message);
+    return [];
+  }
+  return (data || []).map((row) => toCamel<CustomerBeneficiary>(row));
 }
 
 // ─── DEFAULT MASTER LISTS ────────────────────────

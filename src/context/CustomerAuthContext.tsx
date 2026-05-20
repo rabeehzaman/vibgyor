@@ -7,11 +7,16 @@ import {
   generateSalt,
   hashPassword,
   verifyPassword,
+  hashPin,
+  verifyPin,
+  isValidPin,
 } from "@/lib/customer-auth";
 import {
   insertCustomerUser,
   fetchCustomerUserByMobile,
+  fetchCustomerUserById,
   updateCustomerUserLastLogin,
+  updateCustomerUserPin,
 } from "@/lib/supabase-db";
 
 const STORAGE_KEY = "vibgyor-customer";
@@ -21,6 +26,7 @@ interface CustomerSession {
   name: string;
   mobile: string;
   accountNumber: string;
+  hasPin: boolean;
 }
 
 interface CustomerAuthState {
@@ -30,16 +36,30 @@ interface CustomerAuthState {
     name: string,
     mobile: string,
     accountNumber: string,
-    password: string
+    password: string,
+    pin: string
   ) => Promise<{ success: boolean; error?: string }>;
   login: (
     mobile: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  setupPin: (pin: string) => Promise<{ success: boolean; error?: string }>;
+  verifyCustomerPin: (pin: string) => Promise<boolean>;
+  refreshSession: () => Promise<void>;
 }
 
 const CustomerAuthContext = createContext<CustomerAuthState | null>(null);
+
+function sessionFromUser(user: CustomerUser): CustomerSession {
+  return {
+    id: user.id,
+    name: user.name,
+    mobile: user.mobile,
+    accountNumber: user.accountNumber,
+    hasPin: Boolean(user.pinHash && user.pinSalt),
+  };
+}
 
 export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<CustomerSession | null>(null);
@@ -65,13 +85,17 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
       name: string,
       mobile: string,
       accountNumber: string,
-      password: string
+      password: string,
+      pin: string
     ): Promise<{ success: boolean; error?: string }> => {
       if (!/^\d{10}$/.test(mobile)) {
         return { success: false, error: "Mobile number must be 10 digits" };
       }
       if (password.length < 6) {
         return { success: false, error: "Password must be at least 6 characters" };
+      }
+      if (!isValidPin(pin)) {
+        return { success: false, error: "PIN must be 4 digits" };
       }
 
       const existing = await fetchCustomerUserByMobile(mobile);
@@ -81,6 +105,8 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
 
       const salt = generateSalt();
       const hash = await hashPassword(password, salt);
+      const pinSalt = generateSalt();
+      const pinHashed = await hashPin(pin, pinSalt);
       const now = new Date().toISOString();
       const user: CustomerUser = {
         id: generateCustomerUserId(),
@@ -89,12 +115,15 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
         accountNumber: accountNumber.trim(),
         passwordHash: hash,
         passwordSalt: salt,
+        pinHash: pinHashed,
+        pinSalt,
+        pinUpdatedAt: now,
         createdAt: now,
         lastLoginAt: now,
       };
 
       await insertCustomerUser(user);
-      saveSession({ id: user.id, name: user.name, mobile: user.mobile, accountNumber: user.accountNumber });
+      saveSession(sessionFromUser(user));
       return { success: true };
     },
     []
@@ -116,7 +145,7 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
       }
 
       await updateCustomerUserLastLogin(user.id);
-      saveSession({ id: user.id, name: user.name, mobile: user.mobile, accountNumber: user.accountNumber });
+      saveSession(sessionFromUser(user));
       return { success: true };
     },
     []
@@ -127,8 +156,49 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
     setCustomer(null);
   }, []);
 
+  const setupPin = useCallback(
+    async (pin: string): Promise<{ success: boolean; error?: string }> => {
+      if (!customer) return { success: false, error: "Not logged in" };
+      if (!isValidPin(pin)) return { success: false, error: "PIN must be 4 digits" };
+
+      const pinSalt = generateSalt();
+      const pinHashed = await hashPin(pin, pinSalt);
+      await updateCustomerUserPin(customer.id, pinHashed, pinSalt);
+      saveSession({ ...customer, hasPin: true });
+      return { success: true };
+    },
+    [customer]
+  );
+
+  const verifyCustomerPin = useCallback(
+    async (pin: string): Promise<boolean> => {
+      if (!customer) return false;
+      const user = await fetchCustomerUserById(customer.id);
+      if (!user || !user.pinHash || !user.pinSalt) return false;
+      return verifyPin(pin, user.pinSalt, user.pinHash);
+    },
+    [customer]
+  );
+
+  const refreshSession = useCallback(async () => {
+    if (!customer) return;
+    const user = await fetchCustomerUserById(customer.id);
+    if (user) saveSession(sessionFromUser(user));
+  }, [customer]);
+
   return (
-    <CustomerAuthContext.Provider value={{ customer, isLoading, register, login, logout }}>
+    <CustomerAuthContext.Provider
+      value={{
+        customer,
+        isLoading,
+        register,
+        login,
+        logout,
+        setupPin,
+        verifyCustomerPin,
+        refreshSession,
+      }}
+    >
       {children}
     </CustomerAuthContext.Provider>
   );

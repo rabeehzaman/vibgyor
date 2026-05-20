@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { ToastNotification, useToast } from "@/components/ui/toast-notification";
 import BankBook from "@/components/accountant/BankBook";
 import NetProfitCalculator from "@/components/accountant/NetProfitCalculator";
+import CustomerTransferRequests from "@/components/accountant/CustomerTransferRequests";
 import { createEmptyDailyBankBookState } from "@/lib/bank-book-utils";
 
 const MOCK_BALANCE = 2500000;
@@ -247,6 +248,9 @@ export default function AccountantPage() {
 
         {/* ═══ TAB 1: Fund Transfers ═══ */}
         <TabsContent value="transfers" className="space-y-4 mt-4">
+          {/* Customer-initiated transfer requests (visible to accountant for action) */}
+          <CustomerTransferRequests />
+
           <div className="flex justify-end">
             <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setErrors({}); }}>
               <DialogTrigger asChild>

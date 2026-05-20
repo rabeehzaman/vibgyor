@@ -300,3 +300,23 @@ create table if not exists customer_users (
   created_at text not null,
   last_login_at text
 );
+
+-- PIN columns (migration-safe)
+alter table customer_users add column if not exists pin_hash text;
+alter table customer_users add column if not exists pin_salt text;
+alter table customer_users add column if not exists pin_updated_at text;
+
+-- Per-customer beneficiaries (saved for fund transfers)
+create table if not exists customer_beneficiaries (
+  id text primary key,
+  customer_user_id text not null references customer_users(id) on delete cascade,
+  nickname text not null,
+  beneficiary_name text not null,
+  account_number text not null,
+  ifsc_code text not null,
+  bank_name text,
+  created_at text not null
+);
+
+create index if not exists customer_beneficiaries_user_idx
+  on customer_beneficiaries(customer_user_id);

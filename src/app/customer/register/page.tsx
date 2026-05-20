@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Lock } from "lucide-react";
 
 export default function CustomerRegisterPage() {
   const { customer, isLoading, register } = useCustomerAuth();
@@ -18,6 +18,8 @@ export default function CustomerRegisterPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,9 +35,23 @@ export default function CustomerRegisterPage() {
       setError("Passwords do not match");
       return;
     }
+    if (!/^\d{4}$/.test(pin)) {
+      setError("PIN must be exactly 4 digits");
+      return;
+    }
+    if (pin !== confirmPin) {
+      setError("PINs do not match");
+      return;
+    }
 
     setSubmitting(true);
-    const result = await register(name.trim(), mobile.trim(), accountNumber.trim(), password);
+    const result = await register(
+      name.trim(),
+      mobile.trim(),
+      accountNumber.trim(),
+      password,
+      pin
+    );
     setSubmitting(false);
     if (result.success) {
       router.push("/customer");
@@ -110,6 +126,7 @@ export default function CustomerRegisterPage() {
                 placeholder="At least 6 characters"
                 required
                 minLength={6}
+                autoComplete="new-password"
               />
             </div>
             <div>
@@ -122,8 +139,57 @@ export default function CustomerRegisterPage() {
                 placeholder="Re-enter your password"
                 required
                 minLength={6}
+                autoComplete="new-password"
               />
             </div>
+
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold">Set up your 4-digit PIN</p>
+              </div>
+              <p className="mb-3 text-xs text-muted-foreground">
+                You&apos;ll use this PIN to authorize fund transfers and other
+                sensitive actions. Like a UPI PIN — keep it private.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="pin">PIN</Label>
+                  <Input
+                    id="pin"
+                    type="password"
+                    inputMode="numeric"
+                    pattern="\d{4}"
+                    maxLength={4}
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                    placeholder="••••"
+                    required
+                    autoComplete="off"
+                    className="text-center tracking-[0.5em]"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirmPin">Confirm PIN</Label>
+                  <Input
+                    id="confirmPin"
+                    type="password"
+                    inputMode="numeric"
+                    pattern="\d{4}"
+                    maxLength={4}
+                    value={confirmPin}
+                    onChange={(e) =>
+                      setConfirmPin(e.target.value.replace(/\D/g, ""))
+                    }
+                    placeholder="••••"
+                    required
+                    autoComplete="off"
+                    className="text-center tracking-[0.5em]"
+                  />
+                </div>
+              </div>
+            </div>
+
             <Button type="submit" className="w-full" disabled={submitting}>
               <UserPlus className="mr-2 h-4 w-4" />
               {submitting ? "Creating account..." : "Create Account"}
